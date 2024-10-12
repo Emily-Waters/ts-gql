@@ -1,0 +1,56 @@
+import { mkdir, stat, writeFile } from "fs/promises";
+import { buildClientSchema, getIntrospectionQuery, IntrospectionQuery } from "graphql";
+import { join } from "path";
+import { cwd } from "process";
+import { GraphQLTypeGenerator, GraphQLTypeGeneratorOptions } from "./utilities/type-generator";
+
+export type Config = {
+  gqlEndpoint: string;
+  outDir: string;
+  config?: GraphQLTypeGeneratorOptions;
+};
+
+export default function defineConfig(cfg: Config) {
+  return cfg;
+}
+
+export async function build({ gqlEndpoint, outDir, config = {} }: Config) {
+  const outDirPath = join(cwd(), outDir);
+  const outDirStat = await stat(outDirPath).catch(() => null);
+
+  if (!outDirStat) {
+    await mkdir(outDirPath);
+  } else if (!outDirStat.isDirectory()) {
+    throw new Error(`The path ${outDirPath} is not a directory`);
+  }
+
+  const schema = await getSchema(gqlEndpoint);
+
+  const typeBuilder = new GraphQLTypeGenerator(schema, config);
+
+  const output = await typeBuilder.generate();
+
+  for (const [key, value] of Object.entries(output)) {
+    await writeFile(join(cwd(), outDir, key + ".ts"), value);
+  }
+
+  return output;
+}
+
+async function getSchema(gqlEndpoint: string) {
+  const introspectionQuery = getIntrospectionQuery();
+
+  const data: IntrospectionQuery = await fetch(gqlEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: introspectionQuery,
+    }),
+  })
+    .then((res) => res.json())
+    .then((res) => res.data);
+
+  return buildClientSchema(data);
+}

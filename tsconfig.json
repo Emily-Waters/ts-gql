@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "incremental": true,
+    "module": "commonjs",
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": ["esbuild.ts", "src/**/*.ts"]
+}
