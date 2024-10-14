@@ -5,6 +5,8 @@
   "scripts": {
     "start": "node dist/bin.js",
     "build": "tsx esbuild.ts",
+    "tsc": "tsc --noEmit --preserveWatchOutput",
+    "dev:tsc": "npm run tsc -- --watch",
     "dev:start": "node --watch ./dist/bin.js",
     "dev:build": "npm run build -- --w",
     "dev": "npm run build && concurrently \"npm run dev:*\""

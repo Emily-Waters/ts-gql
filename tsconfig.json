@@ -6,7 +6,9 @@
     "strictNullChecks": true,
     "noImplicitAny": true,
     "isolatedModules": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "alwaysStrict": true
   },
   "include": ["esbuild.ts", "src/**/*.ts"]
 }
