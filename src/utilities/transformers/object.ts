@@ -13,14 +13,14 @@ export class ObjectTransformer extends BaseTransformer {
     for (const fieldKey in fields) {
       const field = fields[fieldKey];
       const type = field.type;
+
       const isNonNullable = TypeGuards.isNonNullable(type);
       const isInputObjectType = TypeGuards.isInputObjectType(type);
 
       const key = field.name;
       const value = this.buildFromOutputType(type, { isNonNullable, isInputObjectType });
 
-      output += StringUtils.indent(this.createKeyValuePair(key, value));
-      output += ";\n";
+      output += `${StringUtils.indent(this.createKeyValuePair(key, value))};\n`;
     }
 
     output += "}\n\n";
