@@ -7,6 +7,8 @@ import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { build } from ".";
 
+console.time("build");
+
 async function loadAndExecuteTSFile(configName: string) {
   register({ transpileOnly: true });
   return await require(configName);
@@ -70,10 +72,6 @@ async function importConfig() {
 }
 
 importConfig()
-  .then((config) => {
-    console.time("build");
-    build(config.default).then(() => {
-      console.timeEnd("build");
-    });
-  })
-  .catch(console.error);
+  .then((config) => build(config.default))
+  .catch(console.error)
+  .finally(() => console.timeEnd("build"));
