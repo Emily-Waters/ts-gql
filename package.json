@@ -22,11 +22,13 @@
     "concurrently": "^9.0.1",
     "esbuild": "^0.24.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.1"
   },
   "dependencies": {
-    "yargs": "^17.7.2",
+    "@apollo/client": "^3.11.8",
     "graphql": "^16.9.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "yargs": "^17.7.2"
   }
 }

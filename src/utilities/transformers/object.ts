@@ -5,8 +5,47 @@ import { BaseTransformer } from "./base";
 
 export class ObjectTransformer extends BaseTransformer {
   public transform(objectType: GraphQLObjectType | GraphQLInputObjectType) {
-    let output = `export type ${objectType.name} = {\n`;
-    output += StringUtils.indent(`__typename?: "${objectType.name}";\n`);
+    let output = "";
+
+    if (
+      (objectType.name === "Mutation" || objectType.name === "Query") &&
+      TypeGuards.isObjectType(objectType)
+    ) {
+      const fields = objectType.getFields();
+
+      for (const fieldKey in fields) {
+        const field = fields[fieldKey];
+        const args = field.args;
+
+        output += `export type ${StringUtils.capitalize(field.name)}${objectType.name}Variables = {`;
+
+        for (const arg of args) {
+          const type = arg.type;
+          const isNonNullable = TypeGuards.isNonNullable(type);
+          const isInputObjectType = TypeGuards.isInputObjectType(type);
+
+          const key = arg.name;
+          const value = this.buildFromOutputType(type, { isNonNullable, isInputObjectType });
+
+          output += `\n${StringUtils.indent(this.createKeyValuePair(key, value))};`;
+        }
+
+        output += "\n};\n\n";
+
+        output += `export type ${StringUtils.capitalize(field.name)}${objectType.name} = {
+          __typename?: "${objectType.name}",
+          ${field.name}: ${this.buildFromOutputType(field.type, { isNonNullable: false, isInputObjectType: false })}
+        };\n\n`;
+      }
+
+      return output;
+    }
+
+    output = `export type ${objectType.name} = {\n`;
+
+    if (!TypeGuards.isInputObjectType(objectType)) {
+      output += StringUtils.indent(`__typename?: "${objectType.name}";\n`);
+    }
 
     const fields = objectType.getFields();
 
@@ -23,7 +62,7 @@ export class ObjectTransformer extends BaseTransformer {
       output += `${StringUtils.indent(this.createKeyValuePair(key, value))};\n`;
     }
 
-    output += "}\n\n";
+    output += "};\n\n";
 
     return output;
   }

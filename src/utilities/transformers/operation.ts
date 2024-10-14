@@ -7,15 +7,25 @@ export class OperationTransformer extends BaseTransformer {
   private _objectMap: Record<string, string> = {};
 
   public transform(operationType: GraphQLObjectType, specifier: string) {
-    let output = "";
-
+    let operations = "";
+    const values: Record<string, string>[] = [];
     const fields = operationType.getFields();
 
     for (const fieldKey in fields) {
-      output += this.buildOperation(fields[fieldKey], specifier);
+      values.push({
+        [fields[fieldKey].name]: this.buildOperation(fields[fieldKey], specifier),
+      });
+
+      if (specifier === "mutation") {
+        operations += this.buildHook(fields[fieldKey], specifier);
+      } else {
+        for (const key of ["", "Lazy", "Suspense"]) {
+          operations += this.buildHook(fields[fieldKey], specifier, key);
+        }
+      }
     }
 
-    return output;
+    return { values, operations };
   }
 
   private buildOperation(field: GraphQLField<any, any>, specifier: string) {
@@ -30,7 +40,7 @@ export class OperationTransformer extends BaseTransformer {
     output += `${operation} {\n`;
     output += `${StringUtils.indent(alias)}`;
     output += this.buildFields(field.type);
-    output += `\n}\n\n`;
+    output += `\n}`;
 
     return output;
   }
@@ -96,5 +106,24 @@ export class OperationTransformer extends BaseTransformer {
     } else {
       return type;
     }
+  }
+
+  private buildHook(field: GraphQLField<any, any>, specifier: string, modifier = "") {
+    const fieldName = StringUtils.capitalize(field.name);
+    const specifierName = StringUtils.capitalize(specifier);
+    const modifierName = StringUtils.capitalize(modifier);
+
+    return `export function use${fieldName}${modifierName}${specifierName}(
+  baseOptions?: Apollo.${modifierName}${specifierName}HookOptions<
+    Types.${fieldName}${specifierName},
+    Types.${fieldName}${specifierName}Variables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.use${modifierName}${specifierName}<
+    Types.${fieldName}${specifierName},
+    Types.${fieldName}${specifierName}Variables
+  >(${fieldName}Document, options);
+};\n\n`;
   }
 }
