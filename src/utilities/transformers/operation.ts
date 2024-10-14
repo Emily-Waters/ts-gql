@@ -52,9 +52,10 @@ export class OperationTransformer extends BaseTransformer {
     return output;
   }
 
-  protected buildSignature(field: GraphQLField<any, any>, specifier: string) {
-    let operation = "";
+  private buildSignature(field: GraphQLField<any, any>, specifier: string) {
     let output = "";
+
+    let operation = "";
     let alias = "";
 
     operation += `${specifier} ${StringUtils.capitalize(field.name)}`;
