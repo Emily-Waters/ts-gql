@@ -4,6 +4,8 @@ import { StringUtils } from "../string/string-utils";
 import { BaseTransformer } from "./base";
 
 export class OperationTransformer extends BaseTransformer {
+  private _objectMap: Record<string, string> = {};
+
   public transform(operationType: GraphQLObjectType, specifier: string) {
     let output = "";
 
@@ -22,31 +24,37 @@ export class OperationTransformer extends BaseTransformer {
     const baseType = this.findBaseType(type);
 
     if (TypeGuards.isObjectType(baseType)) {
-      output += " {\n";
+      if (this._objectMap[baseType.name]) {
+        output += this._objectMap[baseType.name];
+      } else {
+        output += " {\n";
 
-      const fields = baseType.getFields();
-      for (const fieldKey in fields) {
-        const field = fields[fieldKey];
+        const fields = baseType.getFields();
+        for (const fieldKey in fields) {
+          const field = fields[fieldKey];
 
-        const baseField = this.findBaseType(field);
+          const baseField = this.findBaseType(field);
 
-        output += `${StringUtils.indent(field.name, depth)}`;
+          output += `${StringUtils.indent(field.name, depth)}`;
 
-        if (TypeGuards.isObjectType(baseField)) {
-          output += this.buildFields(baseField, depth + 1);
-        } else if (TypeGuards.isUnion(baseField)) {
-          const types = baseField.getTypes();
+          if (TypeGuards.isObjectType(baseField)) {
+            output += this.buildFields(baseField, depth + 1);
+          } else if (TypeGuards.isUnion(baseField)) {
+            const types = baseField.getTypes();
 
-          for (const type of types) {
-            output += `\n${StringUtils.indent(`... on ${type.name}`, depth)}`;
-            output += this.buildFields(type, depth + 1);
+            for (const type of types) {
+              output += `\n${StringUtils.indent(`... on ${type.name}`, depth)}`;
+              output += this.buildFields(type, depth + 1);
+            }
           }
+
+          output += "\n";
         }
 
-        output += "\n";
+        output += StringUtils.indent(`}`, depth - 1);
       }
 
-      output += StringUtils.indent(`}`, depth - 1);
+      this._objectMap[baseType.name] = output;
     }
 
     return output;

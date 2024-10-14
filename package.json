@@ -9,7 +9,8 @@
     "dev:tsc": "npm run tsc -- --watch",
     "dev:start": "node --watch ./dist/bin.js",
     "dev:build": "npm run build -- --w",
-    "dev": "npm run build && concurrently \"npm run dev:*\""
+    "dev": "npm run build && concurrently \"npm run dev:*\"",
+    "test": "node --inspect-brk dist/bin.js"
   },
   "keywords": [],
   "author": "",

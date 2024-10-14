@@ -7,13 +7,15 @@ import {
   GraphQLSchema,
   GraphQLUnionType,
 } from "graphql";
+import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
 import { StringUtils } from "../string/string-utils";
 
 export class BaseTransformer {
-  constructor(
-    protected _schema: GraphQLSchema,
-    protected _config = _schema.toConfig(),
-  ) {}
+  protected _config: GraphQLSchemaNormalizedConfig;
+
+  constructor(protected _schema: GraphQLSchema) {
+    this._config = _schema.toConfig();
+  }
 
   protected scalar(
     scalarType: GraphQLScalarType,

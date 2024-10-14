@@ -1,4 +1,5 @@
 import { GraphQLSchema } from "graphql";
+import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
 import { TypeGuards } from "../guards/type-guards";
 import { EnumTransformer } from "./transformers/enum";
 import { ObjectTransformer } from "./transformers/object";
@@ -10,6 +11,8 @@ export interface GraphQLTypeGeneratorOptions {
 }
 
 export class GraphQLTypeGenerator {
+  private _config: GraphQLSchemaNormalizedConfig;
+
   private _types = { ext: "ts", value: "" };
   private _enums = { ext: "ts", value: "" };
   private _scalars = { ext: "ts", value: "" };
@@ -19,23 +22,22 @@ export class GraphQLTypeGenerator {
   private EnumTransformer: EnumTransformer;
   private ObjectTransformer: ObjectTransformer;
   private ScalarTransformer: ScalarTransformer;
-
   private OperationTransformer: OperationTransformer;
 
   constructor(
     private readonly _schema: GraphQLSchema,
-    options: GraphQLTypeGeneratorOptions,
-    private readonly _config = _schema.toConfig(),
+    private readonly options: GraphQLTypeGeneratorOptions,
   ) {
-    this.EnumTransformer = new EnumTransformer(this._schema);
-    this.ObjectTransformer = new ObjectTransformer(this._schema);
-    this.ScalarTransformer = new ScalarTransformer(this._schema);
+    this._config = _schema.toConfig();
 
+    this.EnumTransformer = new EnumTransformer(this._schema);
+    this.ScalarTransformer = new ScalarTransformer(this._schema);
+    this.ObjectTransformer = new ObjectTransformer(this._schema);
     this.OperationTransformer = new OperationTransformer(this._schema);
 
     this._types.value += `import * as Enums from "./enums";\n`;
     this._types.value += `import * as Scalars from "./scalars";\n\n`;
-    this._types.value += `type MaybeValue<T> = ${options.maybeValue || "T | undefined"};\n\n`;
+    this._types.value += `type MaybeValue<T> = ${this.options.maybeValue || "T | undefined"};\n\n`;
   }
 
   public async generate() {
