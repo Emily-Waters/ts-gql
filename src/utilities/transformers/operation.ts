@@ -34,13 +34,13 @@ export class OperationTransformer extends BaseTransformer {
     let operation = `${specifier} ${StringUtils.capitalize(field.name)}`;
     let alias = field.name;
 
-    operation += this.buildArgs(field.args, (arg) => `${arg.name}: ${arg.type}`);
+    operation += this.buildArgs(field.args, (arg) => `$${arg.name}: ${arg.type}`);
     alias += this.buildArgs(field.args, (arg) => `${arg.name}: $${arg.name}`);
 
     output += `${operation} {\n`;
     output += `${StringUtils.indent(alias)}`;
     output += this.buildFields(field.type);
-    output += `\n}`;
+    output += `\n}\n\n`;
 
     return output;
   }
