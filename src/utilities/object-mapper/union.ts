@@ -10,11 +10,11 @@ export class UnionType extends BaseType<T> {
     this.name = type.name;
     this.delimiters = { start: "", end: "" };
 
-    this.map(type);
+    this.map();
   }
 
-  private map(unionType: T) {
-    for (const type of unionType.getTypes()) {
+  private map() {
+    for (const type of this.type.getTypes()) {
       this.pairs.push({ key: "", value: type.name, metaTypeData: { isNonNullable: true } });
     }
   }
