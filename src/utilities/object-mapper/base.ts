@@ -78,6 +78,6 @@ export abstract class BaseType<T> {
   }
 
   public toString() {
-    return `export type ${this.name} = ${this.buildPairs()}\n\n`;
+    return `export type ${this.name} =${this.buildPairs()}\n\n`;
   }
 }
