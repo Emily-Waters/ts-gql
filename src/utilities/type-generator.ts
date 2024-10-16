@@ -1,5 +1,4 @@
 import { GraphQLSchema } from "graphql";
-import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
 import { TypeGuards } from "../guards/type-guards";
 import { EnumType } from "./object-mapper/enum";
 import { OperationType } from "./object-mapper/operation";
@@ -11,16 +10,12 @@ export interface GraphQLTypeGeneratorOptions {
 }
 
 export class GraphQLTypeGenerator {
-  private _config: GraphQLSchemaNormalizedConfig;
-
   private _types = { ext: "ts", value: "" };
 
   constructor(
-    private readonly _schema: GraphQLSchema,
-    private readonly options: GraphQLTypeGeneratorOptions,
+    _schema: GraphQLSchema,
+    private _config = _schema.toConfig(),
   ) {
-    this._config = _schema.toConfig();
-
     this._types.value =
       `import { gql } from "@apollo/client";\n` +
       `import * as Apollo from "@apollo/client";\n\n` +
@@ -33,31 +28,29 @@ export class GraphQLTypeGenerator {
         continue;
       }
 
-      if (TypeGuards.isEnum(type)) {
-        this._types.value += new EnumType(type).toString();
-        continue;
-      }
+      switch (true) {
+        case TypeGuards.isEnum(type):
+          this._types.value += new EnumType(type).toString();
+          break;
 
-      if (TypeGuards.isObjectType(type)) {
-        const isQuery = type.name === "Query";
-        const isMutation = type.name === "Mutation";
+        case TypeGuards.isObjectType(type):
+          const isQuery = type.name === "Query";
+          const isMutation = type.name === "Mutation";
 
-        if (isQuery || isMutation) {
-          this._types.value += new OperationType(type).toString();
-        }
+          if (isQuery || isMutation) {
+            this._types.value += new OperationType(type).toString();
+          }
 
-        this._types.value += new TypeScriptObjectType(type).toString();
-        continue;
-      }
+          this._types.value += new TypeScriptObjectType(type).toString();
+          break;
 
-      if (TypeGuards.isInputObjectType(type)) {
-        this._types.value += new TypeScriptObjectType(type).toString();
-        continue;
-      }
+        case TypeGuards.isInputObjectType(type):
+          this._types.value += new TypeScriptObjectType(type).toString();
+          break;
 
-      if (TypeGuards.isUnion(type)) {
-        this._types.value += new UnionType(type).toString();
-        continue;
+        case TypeGuards.isUnion(type):
+          this._types.value += new UnionType(type).toString();
+          break;
       }
     }
 

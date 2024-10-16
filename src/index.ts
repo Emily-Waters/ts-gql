@@ -35,7 +35,7 @@ export async function build({ gqlEndpoint, outDir, options = {} }: Config) {
 
   const schema = await getSchema(gqlEndpoint);
 
-  const typeBuilder = new GraphQLTypeGenerator(schema, options);
+  const typeBuilder = new GraphQLTypeGenerator(schema);
 
   const output = await typeBuilder.generate();
 
