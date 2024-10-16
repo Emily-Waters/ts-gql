@@ -1,19 +1,19 @@
 import { GraphQLEnumType } from "graphql";
 import { BaseType } from "./base";
 
-export class EnumType extends BaseType<GraphQLEnumType> {
-  constructor(type: GraphQLEnumType) {
+export class EnumType<T extends GraphQLEnumType> extends BaseType<T> {
+  constructor(type: T) {
     super(type);
 
     this.separator = " = ";
     this.eol = ",\n";
     this.name = type.name;
 
-    this.map(type);
+    this.map();
   }
 
-  private map(enumType: GraphQLEnumType) {
-    for (const field of enumType.getValues()) {
+  private map() {
+    for (const field of this.type.getValues()) {
       this.pairs.push({
         key: field.name,
         value: `"${field.value}"`,
@@ -23,6 +23,6 @@ export class EnumType extends BaseType<GraphQLEnumType> {
   }
 
   public toString() {
-    return `export enum ${this.name}${this.buildPairs()}\n\n`;
+    return `export enum ${this.name} ${this.buildPairs()}\n\n`;
   }
 }

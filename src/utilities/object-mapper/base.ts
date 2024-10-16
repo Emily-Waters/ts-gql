@@ -59,16 +59,14 @@ export abstract class BaseType<T> {
 
   private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {
     return (
-      ` ${this.delimiters.start}` +
+      `${this.delimiters.start}` +
       pairs.reduce((acc, pair) => {
         return `${acc}${StringUtils.indent(this.keyValuePair(pair, depth + 1), depth + 1)}`;
       }, "") +
       StringUtils.indent(this.delimiters.end, depth)
     );
   }
-}
 
-export abstract class BaseObjectType<T> extends BaseType<T> {
   protected findBaseType<T extends GraphQLType | GraphQLField<any, any>>(type: T): GraphQLType {
     if ("ofType" in type) {
       return this.findBaseType(type.ofType);
@@ -77,5 +75,9 @@ export abstract class BaseObjectType<T> extends BaseType<T> {
     } else {
       return type;
     }
+  }
+
+  public toString() {
+    return `export type ${this.name} = ${this.buildPairs()}\n\n`;
   }
 }

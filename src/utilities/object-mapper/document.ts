@@ -1,9 +1,9 @@
 import { GraphQLArgument, GraphQLField, GraphQLType, GraphQLUnionType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { BaseObjectType } from "./base";
+import { BaseType } from "./base";
 
-export class DocumentType<T extends GraphQLField<any, any>> extends BaseObjectType<T> {
+export class DocumentType<T extends GraphQLField<any, any>> extends BaseType<T> {
   private key: string;
 
   constructor(
@@ -88,6 +88,6 @@ export class DocumentType<T extends GraphQLField<any, any>> extends BaseObjectTy
   }
 
   public toString() {
-    return `${this.key}${this.buildPairs()}`;
+    return `${this.key} ${this.buildPairs()}`;
   }
 }
