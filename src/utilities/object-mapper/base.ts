@@ -9,11 +9,15 @@ export type MetaTypeData = {
   isUnion?: boolean;
 };
 
-type PairType = { key: string; value: string | PairType; metaTypeData?: MetaTypeData }[];
+type PairDataType = {
+  key: string;
+  value: string | PairDataType[];
+  metaTypeData?: MetaTypeData;
+};
 
 export abstract class BaseType<T> {
   protected name: string = "";
-  protected pairs: PairType = [];
+  protected pairs: PairDataType[] = [];
   protected separator: string;
   protected eol: string;
 
@@ -31,7 +35,7 @@ export abstract class BaseType<T> {
     return this._buildPairs(depth, this.pairs);
   }
 
-  protected keyValuePair({ key, value, metaTypeData }: PairType[number], depth = 0) {
+  protected keyValuePair({ key, value, metaTypeData }: PairDataType, depth = 0) {
     if (!metaTypeData?.isNonNullable) {
       key += "?";
     }
@@ -54,7 +58,7 @@ export abstract class BaseType<T> {
     );
   }
 
-  private _buildPairs(depth: number = 0, pairs: PairType): string {
+  private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {
     return pairs.reduce((acc, pair) => {
       return `${acc}${StringUtils.indent(this.keyValuePair(pair), depth)}`;
     }, "");
