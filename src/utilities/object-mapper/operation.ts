@@ -1,9 +1,9 @@
 import { GraphQLField, GraphQLObjectType } from "graphql";
 import { StringUtils } from "../string/string-utils";
-import { BaseObjectType } from "./base";
+import { BaseType } from "./base";
 import { DocumentType } from "./document";
 
-export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T> {
+export class OperationType<T extends GraphQLObjectType> extends BaseType<T> {
   private hooks: string[] = [];
   private documents: { key: string; value: string }[] = [];
 
