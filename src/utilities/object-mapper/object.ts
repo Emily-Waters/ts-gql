@@ -39,10 +39,6 @@ export class TypeScriptObjectType<
   protected map() {
     const fields = this.type.getFields();
 
-    if (this.name === "Query") {
-      console.log(this.type);
-    }
-
     for (const fieldKey in fields) {
       const { name, type } = fields[fieldKey];
 
