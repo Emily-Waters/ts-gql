@@ -23,6 +23,7 @@ async function main() {
     });
 
     await ctx.watch();
+
     console.log("watching...");
   } else {
     await esbuild.build({

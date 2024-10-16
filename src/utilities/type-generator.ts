@@ -1,7 +1,10 @@
 import { GraphQLSchema } from "graphql";
 import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
 import { TypeGuards } from "../guards/type-guards";
-import { StringUtils } from "./string/string-utils";
+import { EnumType } from "./object-mapper/enum";
+import { TypeScriptObjectType } from "./object-mapper/object";
+import { OperationType } from "./object-mapper/operation";
+import { UnionType } from "./object-mapper/union";
 import { EnumTransformer } from "./transformers/enum";
 import { ObjectTransformer } from "./transformers/object";
 import { OperationTransformer } from "./transformers/operation";
@@ -15,7 +18,7 @@ export class GraphQLTypeGenerator {
   private _config: GraphQLSchemaNormalizedConfig;
 
   private _types = { ext: "ts", value: "" };
-  private _enums = { ext: "ts", value: "" };
+  private _enums: { ext: string; value: EnumType[] } = { ext: "ts", value: [] };
   private _scalars = { ext: "ts", value: "" };
   private _queries = { ext: "gql", value: "" };
   private _mutations = { ext: "gql", value: "" };
@@ -38,16 +41,10 @@ export class GraphQLTypeGenerator {
     this.ObjectTransformer = new ObjectTransformer(this._schema);
     this.OperationTransformer = new OperationTransformer(this._schema);
 
-    this._types.value += `import * as Enums from "./enums";
-    import * as Scalars from "./scalars";
-    
-    type MaybeValue<T> = ${this.options.maybeValue || "T | undefined"};\n\n`;
-
-    this._hooks.value += `import { gql } from "@apollo/client";
-    import * as Apollo from "@apollo/client";
-    import * as Types from "./types"
-
-    const defaultOptions = {};\n\n`;
+    this._types.value =
+      `import { gql } from "@apollo/client";\n` +
+      `import * as Apollo from "@apollo/client";\n\n` +
+      `const defaultOptions = {};\n\n`;
   }
 
   public async generate() {
@@ -57,60 +54,34 @@ export class GraphQLTypeGenerator {
       }
 
       if (TypeGuards.isEnum(type)) {
-        this._enums.value += this.EnumTransformer.transform(type);
+        this._types.value += new EnumType(type).toString();
         continue;
       }
 
       if (TypeGuards.isObjectType(type)) {
         const isQuery = type.name === "Query";
         const isMutation = type.name === "Mutation";
-        const operationSpecifier = type.name.toLowerCase();
 
-        if (isQuery) {
-          const { values, operations } = this.OperationTransformer.transform(
-            type,
-            operationSpecifier,
-          );
-
-          for (const val of values) {
-            const [key, query] = Object.entries(val)[0];
-            this._queries.value += query;
-            this._hooks.value += `export const ${StringUtils.capitalize(key)}Document = gql\`\n${query
-              .split("\n")
-              .map((val) => StringUtils.indent(val))
-              .join("\n")}\n\`;\n\n`;
-          }
-
-          this._hooks.value += operations;
-        } else if (isMutation) {
-          const { values, operations } = this.OperationTransformer.transform(
-            type,
-            operationSpecifier,
-          );
-
-          for (const val of values) {
-            const [key, mutation] = Object.entries(val)[0];
-            this._mutations.value += mutation;
-            this._hooks.value += `export const ${StringUtils.capitalize(key)}Document = gql\`\n${mutation
-              .split("\n")
-              .map((val) => StringUtils.indent(val))
-              .join("\n")}\n\`;\n\n`;
-          }
-
-          this._hooks.value += operations;
+        if (isQuery || isMutation) {
+          this._types.value += new OperationType(type).toString();
         }
 
-        this._types.value += this.ObjectTransformer.transform(type);
+        this._types.value += new TypeScriptObjectType(type).toString();
         continue;
       }
 
       if (TypeGuards.isInputObjectType(type)) {
-        this._types.value += this.ObjectTransformer.transform(type);
+        this._types.value += new TypeScriptObjectType(type).toString();
         continue;
       }
 
       if (TypeGuards.isScalar(type)) {
         this._scalars.value += this.ScalarTransformer.transform(type);
+        continue;
+      }
+
+      if (TypeGuards.isUnion(type)) {
+        this._types.value += new UnionType(type).toString();
         continue;
       }
     }

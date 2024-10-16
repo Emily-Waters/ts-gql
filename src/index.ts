@@ -40,7 +40,12 @@ export async function build({ gqlEndpoint, outDir, options = {} }: Config) {
   const output = await typeBuilder.generate();
 
   for (const [key, { ext, value }] of Object.entries(output)) {
-    await writeFile(join(cwd(), outDir, `${key}.${ext}`), value);
+    if (Array.isArray(value)) {
+      const content = value.map((enumType) => enumType.toString()).join("\n\n");
+      await writeFile(join(cwd(), outDir, `${key}.${ext}`), content);
+    } else {
+      await writeFile(join(cwd(), outDir, `${key}.${ext}`), value);
+    }
   }
 
   if (options.barrel) {
