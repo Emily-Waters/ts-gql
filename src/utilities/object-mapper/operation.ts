@@ -55,10 +55,9 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
           ${hookOptions}
         >,
       ) {
-        const options = { ...defaultOptions, ...baseOptions };
         return Apollo.use${modifierName}${specifierName}<
           ${hookOptions}
-        >(${fieldName}Document, options);
+        >(${fieldName}Document, baseOptions);
       };`;
   }
 

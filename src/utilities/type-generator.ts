@@ -16,10 +16,7 @@ export class GraphQLTypeGenerator {
     _schema: GraphQLSchema,
     private _config = _schema.toConfig(),
   ) {
-    this._types.value =
-      `import { gql } from "@apollo/client";\n` +
-      `import * as Apollo from "@apollo/client";\n\n` +
-      `const defaultOptions = {};\n\n`;
+    this._types.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
   }
 
   public async generate() {
