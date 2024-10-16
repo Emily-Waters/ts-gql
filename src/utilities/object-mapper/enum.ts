@@ -23,6 +23,6 @@ export class EnumType extends BaseType<GraphQLEnumType> {
   }
 
   public toString() {
-    return `export enum ${this.name} {\n${this.buildPairs(1)}}\n\n`;
+    return `export enum ${this.name}${this.buildPairs()}\n\n`;
   }
 }

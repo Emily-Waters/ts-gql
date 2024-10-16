@@ -1,13 +1,7 @@
-import {
-  GraphQLArgument,
-  GraphQLField,
-  GraphQLObjectType,
-  GraphQLType,
-  GraphQLUnionType,
-} from "graphql";
-import { TypeGuards } from "../../guards/type-guards";
+import { GraphQLField, GraphQLObjectType } from "graphql";
 import { StringUtils } from "../string/string-utils";
 import { BaseObjectType } from "./base";
+import { DocumentType } from "./document";
 
 export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T> {
   private hooks: string[] = [];
@@ -30,7 +24,10 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
     for (const fieldKey in fields) {
       const field = fields[fieldKey];
 
-      this.documents.push({ key: fieldKey, value: this.buildDocument(field, specifier) });
+      this.documents.push({
+        key: field.name,
+        value: new DocumentType(field, specifier).toString(),
+      });
 
       if (specifier === "Mutation") {
         this.hooks.push(this.buildHook(fields[fieldKey], specifier));
@@ -40,69 +37,6 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
         }
       }
     }
-  }
-
-  private buildDocument(field: GraphQLField<any, any>, specifier: string) {
-    return (
-      `${specifier.toLowerCase()} ${StringUtils.capitalize(field.name)}` +
-      `${this.buildArgs(field.args, (arg) => `$${arg.name}: ${arg.type}`)} {\n` +
-      `${StringUtils.indent(field.name + this.buildArgs(field.args, (arg) => `${arg.name}: $${arg.name}`))}` +
-      `${this.buildFields(field.type)}` +
-      "\n}"
-    );
-  }
-
-  private buildArgs(
-    args: readonly GraphQLArgument[],
-    keyValuePairCallback: (args: GraphQLArgument) => string,
-  ) {
-    if (args.length) {
-      return `(${args.map(keyValuePairCallback).join(", ")})`;
-    }
-
-    return "";
-  }
-
-  private buildFields(type: GraphQLType, depth = 2) {
-    let output = "";
-
-    const baseType = this.findBaseType(type);
-
-    if (TypeGuards.isObjectType(baseType)) {
-      const fields = baseType.getFields();
-
-      output += " {\n";
-
-      for (const fieldKey in fields) {
-        const field = fields[fieldKey];
-        const baseField = this.findBaseType(field);
-
-        output += `${StringUtils.indent(field.name, depth)}`;
-
-        if (TypeGuards.isObjectType(baseField)) {
-          output += this.buildFields(baseField, depth + 1);
-        } else if (TypeGuards.isUnion(baseField)) {
-          output += this.buildFragment(baseField, depth);
-        }
-
-        output += "\n";
-      }
-
-      output += StringUtils.indent(`}`, depth - 1);
-    }
-
-    return output;
-  }
-
-  private buildFragment(field: GraphQLUnionType, depth: number) {
-    let output = "";
-    const types = field.getTypes();
-
-    for (const type of types) {
-      output += `\n${StringUtils.indent(`... on ${type.name}`, depth)}${this.buildFields(type, depth + 1)}`;
-    }
-
-    return output;
   }
 
   private buildHook(field: GraphQLField<any, any>, specifier: string, modifier = "") {

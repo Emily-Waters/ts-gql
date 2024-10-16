@@ -8,6 +8,7 @@ export class UnionType extends BaseType<T> {
     this.separator = " | ";
     this.eol = "";
     this.name = type.name;
+    this.delimiters = { start: "", end: "" };
 
     this.map(type);
   }

@@ -52,6 +52,6 @@ export class TypeScriptObjectType<
       this.pairs = [{ key: "__typename", value: `"${this.name}"` }, ...this.pairs];
     }
 
-    return `export type ${this.name} = {\n${this.buildPairs(1)}}\n\n`;
+    return `export type ${this.name} =${this.buildPairs()}\n\n`;
   }
 }
