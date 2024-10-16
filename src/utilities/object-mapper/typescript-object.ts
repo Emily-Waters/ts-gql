@@ -31,6 +31,7 @@ export class TypeScriptObjectType<
   }
 
   protected metaTypeData(type: GraphQLType, metaType: MetaTypeData = {}): MetaTypeData {
+    // TODO: handle nested lists
     if (TypeGuards.isNonNullable(type)) {
       return this.metaTypeData(type.ofType, { ...metaType, isNonNullable: true });
     } else if (TypeGuards.isList(type)) {
