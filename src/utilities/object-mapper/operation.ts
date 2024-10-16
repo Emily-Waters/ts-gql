@@ -10,8 +10,6 @@ import { StringUtils } from "../string/string-utils";
 import { BaseObjectType } from "./base";
 
 export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T> {
-  private _objectMap: Record<string, string> = {};
-
   private hooks: string[] = [];
   private documents: { key: string; value: string }[] = [];
 
@@ -71,32 +69,26 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
     const baseType = this.findBaseType(type);
 
     if (TypeGuards.isObjectType(baseType)) {
-      if (this._objectMap[baseType.name]) {
-        output += this._objectMap[baseType.name];
-      } else {
-        const fields = baseType.getFields();
+      const fields = baseType.getFields();
 
-        output += " {\n";
+      output += " {\n";
 
-        for (const fieldKey in fields) {
-          const field = fields[fieldKey];
-          const baseField = this.findBaseType(field);
+      for (const fieldKey in fields) {
+        const field = fields[fieldKey];
+        const baseField = this.findBaseType(field);
 
-          output += `${StringUtils.indent(field.name, depth)}`;
+        output += `${StringUtils.indent(field.name, depth)}`;
 
-          if (TypeGuards.isObjectType(baseField)) {
-            output += this.buildFields(baseField, depth + 1);
-          } else if (TypeGuards.isUnion(baseField)) {
-            output += this.buildFragment(baseField, depth);
-          }
-
-          output += "\n";
+        if (TypeGuards.isObjectType(baseField)) {
+          output += this.buildFields(baseField, depth + 1);
+        } else if (TypeGuards.isUnion(baseField)) {
+          output += this.buildFragment(baseField, depth);
         }
 
-        output += StringUtils.indent(`}`, depth - 1);
+        output += "\n";
       }
 
-      this._objectMap[baseType.name] = output;
+      output += StringUtils.indent(`}`, depth - 1);
     }
 
     return output;
@@ -137,7 +129,7 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
 
   public toString() {
     return (
-      `${this.documents.map((document) => `export const ${StringUtils.capitalize(document.key)}Document = gql\`${document.value}\`;`).join("\n\n")}` +
+      `${this.documents.map((document) => `export const ${StringUtils.capitalize(document.key)}Document = gql\`\n${document.value}\`;`).join("\n\n")}` +
       `${this.hooks.join("\n\n")}`
     );
   }

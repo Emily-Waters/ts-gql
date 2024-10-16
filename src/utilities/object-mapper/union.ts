@@ -14,7 +14,7 @@ export class UnionType extends BaseType<T> {
 
   private map(unionType: T) {
     for (const type of unionType.getTypes()) {
-      this.pairs.push({ key: "", value: type.name });
+      this.pairs.push({ key: "", value: type.name, metaTypeData: { isNonNullable: true } });
     }
   }
 

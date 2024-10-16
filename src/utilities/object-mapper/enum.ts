@@ -14,7 +14,11 @@ export class EnumType extends BaseType<GraphQLEnumType> {
 
   private map(enumType: GraphQLEnumType) {
     for (const field of enumType.getValues()) {
-      this.pairs.push({ key: field.name, value: `"${field.value}"` });
+      this.pairs.push({
+        key: field.name,
+        value: `"${field.value}"`,
+        metaTypeData: { isNonNullable: true },
+      });
     }
   }
 
