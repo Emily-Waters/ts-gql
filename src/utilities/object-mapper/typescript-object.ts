@@ -1,31 +1,11 @@
-import { GraphQLField, GraphQLInputObjectType, GraphQLObjectType, GraphQLType } from "graphql";
+import { GraphQLInputObjectType, GraphQLObjectType, GraphQLType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { BaseType, MetaTypeData } from "./base";
-
-export class ObjectType<T> extends BaseType<T> {
-  protected _scalarPrimitiveTypeMap: Record<string, { input: string; output: string }> = {
-    ID: { input: "string", output: "string" },
-    String: { input: "string", output: "string" },
-    Int: { input: "number", output: "number" },
-    Float: { input: "number", output: "number" },
-    Boolean: { input: "boolean", output: "boolean" },
-  };
-
-  protected findBaseType<T extends GraphQLType | GraphQLField<any, any>>(type: T): GraphQLType {
-    if ("ofType" in type) {
-      return this.findBaseType(type.ofType);
-    } else if ("type" in type) {
-      return this.findBaseType(type.type);
-    } else {
-      return type;
-    }
-  }
-}
+import { BaseObjectType, MetaTypeData } from "./base";
 
 export class TypeScriptObjectType<
   T extends GraphQLObjectType | GraphQLInputObjectType,
-> extends ObjectType<T> {
+> extends BaseObjectType<T> {
   constructor(type: T) {
     super(type);
 

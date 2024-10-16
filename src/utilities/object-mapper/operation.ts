@@ -7,14 +7,13 @@ import {
 } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { ObjectType } from "./object";
+import { BaseObjectType } from "./base";
 
-export class OperationType<T extends GraphQLObjectType> extends ObjectType<T> {
+export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T> {
   private _objectMap: Record<string, string> = {};
 
   private hooks: string[] = [];
   private documents: { key: string; value: string }[] = [];
-  private operations: { key: string; value: string }[];
 
   constructor(type: T) {
     super(type);
