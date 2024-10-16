@@ -36,16 +36,16 @@ export abstract class BaseType<T> {
       key += "?";
     }
 
-    if (metaTypeData?.isScalar && typeof value === "string") {
-      const scalarDataField = TypeGuards.isInputObjectType(this.type) ? "input" : "output";
-      value = this._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
-    }
-
-    if (metaTypeData?.isList) {
-      value += "[]";
-    }
-
     if (typeof value === "string") {
+      if (metaTypeData?.isScalar) {
+        const scalarDataField = TypeGuards.isInputObjectType(this.type) ? "input" : "output";
+        value = this._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
+      }
+
+      if (metaTypeData?.isList) {
+        value += "[]";
+      }
+
       return StringUtils.indent(`${key}${this.separator}${value}${this.eol}`);
     }
 
