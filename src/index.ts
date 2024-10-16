@@ -40,23 +40,7 @@ export async function build({ gqlEndpoint, outDir, options = {} }: Config) {
   const output = await typeBuilder.generate();
 
   for (const [key, { ext, value }] of Object.entries(output)) {
-    if (Array.isArray(value)) {
-      const content = value.map((enumType) => enumType.toString()).join("\n\n");
-      await writeFile(join(cwd(), outDir, `${key}.${ext}`), content);
-    } else {
-      await writeFile(join(cwd(), outDir, `${key}.${ext}`), value);
-    }
-  }
-
-  if (options.barrel) {
-    let barrel = "";
-    for (const [key, { ext }] of Object.entries(output)) {
-      if (ext === "ts") {
-        barrel += `export * from "./${key}";\n`;
-      }
-    }
-
-    await writeFile(join(cwd(), outDir, "index.ts"), barrel);
+    await writeFile(join(cwd(), outDir, `${key}.${ext}`), value);
   }
 
   return output;

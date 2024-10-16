@@ -1,5 +1,4 @@
 import { GraphQLEnumType } from "graphql";
-import { StringUtils } from "../string/string-utils";
 import { BaseType } from "./base";
 
 export class EnumType extends BaseType<GraphQLEnumType> {
@@ -20,14 +19,6 @@ export class EnumType extends BaseType<GraphQLEnumType> {
   }
 
   public toString() {
-    let value = `export enum ${this.name} {\n`;
-
-    for (const pair of this.pairs) {
-      value += StringUtils.indent(this.keyValuePair(pair.key, pair.value));
-    }
-
-    value += `}\n\n`;
-
-    return value;
+    return `export enum ${this.name} {\n${this.buildPairs(1)}}\n\n`;
   }
 }

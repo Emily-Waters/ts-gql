@@ -1,4 +1,5 @@
 import { GraphQLField, GraphQLType } from "graphql";
+import { StringUtils } from "../string/string-utils";
 
 export type MetaTypeData = {
   isNonNullable?: boolean;
@@ -17,6 +18,18 @@ export abstract class BaseType<T> {
 
   keyValuePair(key: string, value: string) {
     return `${key}${this.separator}${value}${this.eol}`;
+  }
+
+  protected buildPairs(depth: number = 0) {
+    // let pairs = "";
+
+    // for (const { key, value } of this.pairs) {
+    //   pairs += this.keyValuePair(key, value);
+    // }
+
+    return this.pairs.reduce((acc, { key, value }) => {
+      return `${acc}${StringUtils.indent(this.keyValuePair(key, value), depth)}`;
+    }, "");
   }
 }
 
