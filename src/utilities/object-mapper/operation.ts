@@ -106,6 +106,7 @@ export class OperationType<T extends GraphQLObjectType> extends BaseObjectType<T
   }
 
   private buildHook(field: GraphQLField<any, any>, specifier: string, modifier = "") {
+    // TODO: cleanup formatting, create Query/Mutation types and Variables type
     const fieldName = StringUtils.capitalize(field.name);
     const specifierName = StringUtils.capitalize(specifier);
     const modifierName = StringUtils.capitalize(modifier);
