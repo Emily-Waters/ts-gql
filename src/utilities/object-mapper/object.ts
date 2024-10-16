@@ -66,12 +66,12 @@ export class TypeScriptObjectType<
 
   public toString() {
     const isInputObjectType = TypeGuards.isInputObjectType(this.type);
-    const typeName = `${StringUtils.indent(`__typename?: "${this.name}";\n`)}`;
-    const scalarType = isInputObjectType ? "input" : "output";
+    const typeNameField = `${StringUtils.indent(`__typename?: "${this.name}";\n`)}`;
+    const scalarDataField = isInputObjectType ? "input" : "output";
 
     return (
       `export type ${this.name} = {\n` +
-      `${isInputObjectType ? "" : typeName}` +
+      `${isInputObjectType ? "" : typeNameField}` +
       `${this.pairs
         .map((pair) => {
           let { key, value, metaTypeData: { isNonNullable, isList, isScalar } = {} } = pair;
@@ -81,7 +81,7 @@ export class TypeScriptObjectType<
           }
 
           if (isScalar) {
-            value = this._scalarPrimitiveTypeMap[value]?.[scalarType] || "any";
+            value = this._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
           }
 
           if (isList) {
