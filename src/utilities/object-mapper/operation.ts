@@ -1,8 +1,8 @@
 import { GraphQLField } from "graphql";
 import { StringUtils } from "../string/string-utils";
-import { BaseType } from "./base";
+import { BaseObjectMap } from "./base";
 
-export class OperationType<T extends GraphQLField<any, any>> extends BaseType<T> {
+export class OperationObjectMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
     private specifier: string,

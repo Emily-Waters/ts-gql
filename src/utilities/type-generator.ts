@@ -1,20 +1,20 @@
 import { GraphQLSchema } from "graphql";
 import { TypeGuards } from "../guards/type-guards";
-import { BaseType } from "./object-mapper/base";
-import { DocumentType } from "./object-mapper/document";
-import { EnumType } from "./object-mapper/enum";
-import { HookType } from "./object-mapper/hook";
-import { OperationType } from "./object-mapper/operation";
-import { TypeScriptObjectType } from "./object-mapper/typescript-object";
-import { UnionType } from "./object-mapper/union";
-import { VariablesType } from "./object-mapper/variables";
+import { BaseObjectMap } from "./object-mapper/base";
+import { DocumentObjectMap } from "./object-mapper/document";
+import { EnumObjectMap } from "./object-mapper/enum";
+import { HookFunctionMap } from "./object-mapper/hook";
+import { OperationObjectMap } from "./object-mapper/operation";
+import { TypeScriptObjectMap } from "./object-mapper/typescript-object";
+import { UnionObjectMap } from "./object-mapper/union";
+import { VariableObjectMap } from "./object-mapper/variables";
 
 export interface GraphQLTypeGeneratorOptions {
   maybeValue?: string;
 }
 
 export class GraphQLTypeGenerator {
-  private _typeMap: Map<string, BaseType<unknown>> = new Map();
+  private _typeMap: Map<string, BaseObjectMap<unknown>> = new Map();
   private _types = { ext: "ts", value: "" };
 
   constructor(
@@ -32,7 +32,7 @@ export class GraphQLTypeGenerator {
 
       switch (true) {
         case TypeGuards.isEnum(type):
-          this._typeMap.set(type.name, new EnumType(type));
+          this._typeMap.set(type.name, new EnumObjectMap(type));
           break;
 
         case TypeGuards.isObjectType(type):
@@ -47,27 +47,27 @@ export class GraphQLTypeGenerator {
             for (const fieldKey in fields) {
               const field = fields[fieldKey];
 
-              const documentName = `${field.name}Document`;
-              const hookName = `${field.name}${typeName}Hook`;
-              const variablesName = `${field.name}${typeName}Variables`;
-              const operationName = `${field.name}${typeName}`;
+              const documentKey = `${field.name}Document`;
+              const hookKey = `${field.name}${typeName}Hook`;
+              const variableKey = `${field.name}${typeName}Variables`;
+              const operationKey = `${field.name}${typeName}`;
 
-              this._typeMap.set(documentName, new DocumentType(field, typeName));
-              this._typeMap.set(hookName, new HookType(field, typeName));
-              this._typeMap.set(variablesName, new VariablesType(field, typeName));
-              this._typeMap.set(operationName, new OperationType(field, typeName));
+              this._typeMap.set(documentKey, new DocumentObjectMap(field, typeName));
+              this._typeMap.set(hookKey, new HookFunctionMap(field, typeName));
+              this._typeMap.set(variableKey, new VariableObjectMap(field, typeName));
+              this._typeMap.set(operationKey, new OperationObjectMap(field, typeName));
             }
           } else {
-            this._typeMap.set(type.name, new TypeScriptObjectType(type));
+            this._typeMap.set(type.name, new TypeScriptObjectMap(type));
           }
           break;
 
         case TypeGuards.isInputObjectType(type):
-          this._typeMap.set(type.name, new TypeScriptObjectType(type));
+          this._typeMap.set(type.name, new TypeScriptObjectMap(type));
           break;
 
         case TypeGuards.isUnion(type):
-          this._typeMap.set(type.name, new UnionType(type));
+          this._typeMap.set(type.name, new UnionObjectMap(type));
           break;
       }
     }

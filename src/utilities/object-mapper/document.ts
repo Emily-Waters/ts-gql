@@ -1,9 +1,9 @@
 import { GraphQLArgument, GraphQLField, GraphQLType, GraphQLUnionType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { BaseType } from "./base";
+import { BaseObjectMap } from "./base";
 
-export class DocumentType<T extends GraphQLField<any, any>> extends BaseType<T> {
+export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
     private specifier: string,

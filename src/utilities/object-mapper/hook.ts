@@ -1,8 +1,8 @@
 import { GraphQLField } from "graphql";
 import { StringUtils } from "../string/string-utils";
-import { BaseType } from "./base";
+import { BaseObjectMap } from "./base";
 
-export class HookType<T extends GraphQLField<any, any>> extends BaseType<T> {
+export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
     private specifier: "Query" | "Mutation",

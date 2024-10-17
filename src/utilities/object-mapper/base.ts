@@ -15,7 +15,7 @@ type PairDataType = {
   metaTypeData?: MetaTypeData;
 };
 
-export abstract class BaseType<T> {
+export abstract class BaseObjectMap<T> {
   protected emptyPairValue = "";
   protected name: string = "";
   protected pairs: PairDataType[] = [];

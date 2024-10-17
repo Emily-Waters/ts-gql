@@ -1,11 +1,11 @@
 import { GraphQLInputObjectType, GraphQLObjectType, GraphQLType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { BaseType, MetaTypeData } from "./base";
+import { BaseObjectMap, MetaTypeData } from "./base";
 
-export class TypeScriptObjectType<
+export class TypeScriptObjectMap<
   T extends GraphQLObjectType | GraphQLInputObjectType,
-> extends BaseType<T> {
+> extends BaseObjectMap<T> {
   constructor(type: T) {
     super(type);
 

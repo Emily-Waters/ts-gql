@@ -1,7 +1,7 @@
 import { GraphQLEnumType } from "graphql";
-import { BaseType } from "./base";
+import { BaseObjectMap } from "./base";
 
-export class EnumType<T extends GraphQLEnumType> extends BaseType<T> {
+export class EnumObjectMap<T extends GraphQLEnumType> extends BaseObjectMap<T> {
   constructor(type: T) {
     super(type);
 

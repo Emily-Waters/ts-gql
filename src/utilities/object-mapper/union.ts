@@ -1,7 +1,7 @@
 import { GraphQLUnionType as T } from "graphql";
-import { BaseType } from "./base";
+import { BaseObjectMap } from "./base";
 
-export class UnionType extends BaseType<T> {
+export class UnionObjectMap extends BaseObjectMap<T> {
   constructor(type: T) {
     super(type);
 
