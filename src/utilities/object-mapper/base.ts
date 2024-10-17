@@ -16,10 +16,11 @@ type PairDataType = {
 };
 
 export abstract class BaseType<T> {
+  protected emptyPairValue = "";
   protected name: string = "";
   protected pairs: PairDataType[] = [];
-  protected separator: string;
-  protected eol: string;
+  protected separator: string = ": ";
+  protected eol: string = ";\n";
   protected brackets = { open: " {\n", close: "}" };
   protected declaration: string;
 
@@ -59,6 +60,10 @@ export abstract class BaseType<T> {
   }
 
   private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {
+    if (!pairs.length) {
+      return this.emptyPairValue;
+    }
+
     return (
       `${this.brackets.open}` +
       pairs.reduce((acc, pair) => {
@@ -75,6 +80,21 @@ export abstract class BaseType<T> {
       return this.findBaseType(type.type);
     } else {
       return type;
+    }
+  }
+
+  protected metaTypeData(type: GraphQLType, metaType: MetaTypeData = {}): MetaTypeData {
+    // TODO: handle nested lists
+    if (TypeGuards.isNonNullable(type)) {
+      return this.metaTypeData(type.ofType, { ...metaType, isNonNullable: true });
+    } else if (TypeGuards.isList(type)) {
+      return this.metaTypeData(type.ofType, { ...metaType, isList: true });
+    } else if (TypeGuards.isScalar(type)) {
+      return { ...metaType, isScalar: true };
+    } else if (TypeGuards.isUnion(type)) {
+      return { ...metaType, isUnion: true };
+    } else {
+      return metaType;
     }
   }
 

@@ -1,58 +1,33 @@
 import { GraphQLField } from "graphql";
 import { StringUtils } from "../string/string-utils";
 import { BaseType } from "./base";
-import { DocumentType } from "./document";
 
 export class OperationType<T extends GraphQLField<any, any>> extends BaseType<T> {
-  private hooks: string[] = [];
-  private documents: { key: string; value: string }[] = [];
-
   constructor(
     type: T,
     private specifier: string,
   ) {
     super(type);
 
-    this.name = type.name;
+    this.name = StringUtils.capitalize(type.name) + this.specifier;
     this.separator = ": ";
     this.eol = ";\n";
+
+    this.declaration = `export type ${this.name} =`;
 
     this.map();
   }
 
   public map() {
-    this.documents.push({
+    this.pairs.push({ key: "__typename", value: `"${this.specifier}"` });
+
+    const metaTypeData = this.metaTypeData(this.type.type);
+    const baseType = this.findBaseType(this.type);
+
+    this.pairs.push({
       key: this.type.name,
-      value: new DocumentType(this.type, this.specifier).toString(),
+      value: StringUtils.stripNonAlpha(baseType.toString()),
+      metaTypeData,
     });
-  }
-
-  private buildHook(field: GraphQLField<any, any>, specifier: string, modifier = "") {
-    // TODO: cleanup formatting, create Query/Mutation types and Variables type
-    const fieldName = StringUtils.capitalize(field.name);
-    const specifierName = StringUtils.capitalize(specifier);
-    const modifierName = StringUtils.capitalize(modifier);
-
-    const hookOptions =
-      `${fieldName}${specifierName},\n` + `${fieldName}${specifierName}Variables\n`;
-
-    let depth = 1;
-
-    return `export function use${fieldName}${modifierName}${specifierName}(
-        baseOptions?: Apollo.${modifierName}${specifierName}HookOptions<
-          ${hookOptions}
-        >,
-      ) {
-        return Apollo.use${modifierName}${specifierName}<
-          ${hookOptions}
-        >(${fieldName}Document, baseOptions);
-      };`;
-  }
-
-  public toString() {
-    return (
-      `${this.documents.map((document) => `export const ${StringUtils.capitalize(document.key)}Document = gql\`\n${document.value}\`;`).join("\n\n")}` +
-      `${this.hooks.join("\n\n")}`
-    );
   }
 }

@@ -3,8 +3,11 @@ import { TypeGuards } from "../guards/type-guards";
 import { BaseType } from "./object-mapper/base";
 import { DocumentType } from "./object-mapper/document";
 import { EnumType } from "./object-mapper/enum";
+import { HookType } from "./object-mapper/hook";
+import { OperationType } from "./object-mapper/operation";
 import { TypeScriptObjectType } from "./object-mapper/typescript-object";
 import { UnionType } from "./object-mapper/union";
+import { VariablesType } from "./object-mapper/variables";
 
 export interface GraphQLTypeGeneratorOptions {
   maybeValue?: string;
@@ -37,11 +40,22 @@ export class GraphQLTypeGenerator {
           const isMutation = type.name === "Mutation";
 
           if (isQuery || isMutation) {
+            const typeName = type.name as "Query" | "Mutation";
+
             const fields = type.getFields();
+
             for (const fieldKey in fields) {
               const field = fields[fieldKey];
 
-              this._typeMap.set(field.name, new DocumentType(field, type.name));
+              const documentName = `${field.name}Document`;
+              const hookName = `${field.name}${typeName}Hook`;
+              const variablesName = `${field.name}${typeName}Variables`;
+              const operationName = `${field.name}${typeName}`;
+
+              this._typeMap.set(documentName, new DocumentType(field, typeName));
+              this._typeMap.set(hookName, new HookType(field, typeName));
+              this._typeMap.set(variablesName, new VariablesType(field, typeName));
+              this._typeMap.set(operationName, new OperationType(field, typeName));
             }
           } else {
             this._typeMap.set(type.name, new TypeScriptObjectType(type));
