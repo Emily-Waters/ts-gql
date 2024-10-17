@@ -53,9 +53,9 @@ export class GraphQLTypeGenerator {
               const operationKey = `${field.name}${typeName}`;
 
               this._typeMap.set(documentKey, new DocumentObjectMap(field, typeName));
-              this._typeMap.set(hookKey, new HookFunctionMap(field, typeName));
               this._typeMap.set(variableKey, new VariableObjectMap(field, typeName));
               this._typeMap.set(operationKey, new OperationObjectMap(field, typeName));
+              this._typeMap.set(hookKey, new HookFunctionMap(field, typeName));
             }
           } else {
             this._typeMap.set(type.name, new TypeScriptObjectMap(type));
