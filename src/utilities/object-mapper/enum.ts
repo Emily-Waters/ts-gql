@@ -5,10 +5,9 @@ export class EnumObjectMap<T extends GraphQLEnumType> extends BaseObjectMap<T> {
   constructor(type: T) {
     super(type);
 
+    this.terminator = "";
     this.separator = " = ";
     this.eol = ",\n";
-    this.name = type.name;
-
     this.declaration = `export enum ${this.name}`;
 
     this.map();

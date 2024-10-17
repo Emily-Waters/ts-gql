@@ -7,9 +7,7 @@ export class UnionObjectMap extends BaseObjectMap<T> {
 
     this.separator = "| ";
     this.eol = "\n";
-    this.name = type.name;
     this.brackets = { open: "", close: "" };
-
     this.declaration = `export type ${this.name} =\n`;
 
     this.map();

@@ -5,11 +5,11 @@ import { BaseObjectMap } from "./base";
 export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
-    private specifier: "Query" | "Mutation",
+    private operation: "Query" | "Mutation",
+    private modifier: "Lazy" | "Suspense" | "" = "",
   ) {
-    super(type);
+    super(type, `${StringUtils.capitalize(type.name)}${operation}${modifier}Hook`);
 
-    this.name = type.name;
     this.separator = "";
     this.eol = "";
     this.brackets.open = "";
@@ -20,38 +20,29 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjec
   }
 
   private map() {
-    const key = "";
-    let value = "";
-
-    const fieldName = StringUtils.capitalize(this.type.name);
-    const specifierName = StringUtils.capitalize(this.specifier);
-
-    if (this.specifier === "Mutation") {
-      value += this.buildHook(fieldName, specifierName);
-    } else {
-      const modifiers = ["", "Lazy", "Suspense"];
-
-      for (const modifier of modifiers) {
-        value += this.buildHook(fieldName, specifierName, modifier);
-      }
-    }
-
-    this.pairs.push({ key, value, metaTypeData: { isNonNullable: true } });
+    this.pairs.push({
+      key: "",
+      value: this.buildHook(),
+      metaTypeData: { isNonNullable: true },
+    });
   }
 
-  private buildHook(fieldName: string, specifierName: string, modifierName = "") {
+  private buildHook() {
+    const fieldName = StringUtils.capitalize(this.type.name);
+    const operationName = StringUtils.capitalize(this.operation);
+
     return (
-      `export function use${fieldName}${modifierName}${specifierName}(\n` +
-      `  baseOptions?: Apollo.${modifierName}${specifierName}HookOptions<\n` +
-      `    ${fieldName}${specifierName},\n` +
-      `    ${fieldName}${specifierName}Variables\n` +
+      `export function use${fieldName}${this.modifier}${operationName}(\n` +
+      `  baseOptions?: Apollo.${this.modifier}${operationName}HookOptions<\n` +
+      `    ${fieldName}${operationName}Result,\n` +
+      `    ${fieldName}${operationName}Variables\n` +
       `  >,\n` +
       `) {\n` +
-      `  return Apollo.use${modifierName}${specifierName}<\n` +
-      `    ${fieldName}${specifierName},\n` +
-      `    ${fieldName}${specifierName}Variables\n` +
+      `  return Apollo.use${this.modifier}${operationName}<\n` +
+      `    ${fieldName}${operationName}Result,\n` +
+      `    ${fieldName}${operationName}Variables\n` +
       `  >(${fieldName}Document, baseOptions);\n` +
-      `}\n\n`
+      `}`
     );
   }
 }

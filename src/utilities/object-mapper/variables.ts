@@ -7,13 +7,12 @@ export class VariableObjectMap<T extends GraphQLField<any, any>> extends BaseObj
     type: T,
     private specifier: "Query" | "Mutation",
   ) {
-    super(type);
+    super(type, `${type.name}${specifier}Variables`);
 
     this.separator = ": ";
     this.eol = ";\n";
-    this.emptyPairValue = "{ [key: string]: never }";
-
     this.declaration = `export type ${StringUtils.capitalize(type.name)}${this.specifier}Variables =`;
+    this.emptyPairValue = "{ [key: string]: never }";
 
     this.map();
   }

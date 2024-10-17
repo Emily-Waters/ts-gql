@@ -9,10 +9,8 @@ export class TypeScriptObjectMap<
   constructor(type: T) {
     super(type);
 
-    this.name = type.name;
     this.separator = ": ";
     this.eol = ";\n";
-
     this.declaration = `export type ${this.name} =`;
 
     this.map();
@@ -27,6 +25,8 @@ export class TypeScriptObjectMap<
 
     for (const fieldKey in fields) {
       const { name, type } = fields[fieldKey];
+
+      const baseType = this.findBaseType(type);
 
       this.pairs.push({
         key: name,

@@ -1,4 +1,12 @@
-import { GraphQLField, GraphQLType } from "graphql";
+import {
+  GraphQLEnumType,
+  GraphQLField,
+  GraphQLInputObjectType,
+  GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLType,
+  GraphQLUnionType,
+} from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
 
@@ -15,7 +23,19 @@ type PairDataType = {
   metaTypeData?: MetaTypeData;
 };
 
-export abstract class BaseObjectMap<T> {
+type MappableTypes =
+  | GraphQLObjectType
+  | GraphQLField<any, any>
+  | GraphQLInputObjectType
+  | GraphQLEnumType
+  | GraphQLUnionType
+  | GraphQLScalarType;
+
+export abstract class BaseObjectMap<T extends MappableTypes> {
+  static instanceCount = 0;
+  static _typeMap: Map<string, BaseObjectMap<MappableTypes>> = new Map();
+
+  protected terminator: string = ";";
   protected emptyPairValue = "";
   protected name: string = "";
   protected pairs: PairDataType[] = [];
@@ -32,9 +52,23 @@ export abstract class BaseObjectMap<T> {
     Boolean: { input: "boolean", output: "boolean" },
   };
 
-  constructor(protected type: T) {}
+  constructor(
+    protected type: T,
+    name?: string,
+  ) {
+    if (!this.name) {
+      this.name = name || type.name;
+    }
 
-  protected buildPairs(depth: number = 0) {
+    // if (BaseObjectMap._typeMap.has(this.name)) {
+    //   console.error(`ERROR: Type with name ${this.name} already exists`);
+    //   process.exit(1);
+    // }
+
+    BaseObjectMap._typeMap.set(this.name, this);
+  }
+
+  public buildPairs(depth: number = 0) {
     return this._buildPairs(depth, this.pairs);
   }
 
@@ -99,6 +133,6 @@ export abstract class BaseObjectMap<T> {
   }
 
   public toString() {
-    return `${this.declaration}${this.buildPairs()};`;
+    return `${this.declaration}${this.buildPairs()}${this.terminator}`;
   }
 }

@@ -7,12 +7,10 @@ export class OperationObjectMap<T extends GraphQLField<any, any>> extends BaseOb
     type: T,
     private specifier: string,
   ) {
-    super(type);
+    super(type, `${StringUtils.capitalize(type.name)}${specifier}Result`);
 
-    this.name = StringUtils.capitalize(type.name) + this.specifier;
     this.separator = ": ";
     this.eol = ";\n";
-
     this.declaration = `export type ${this.name} =`;
 
     this.map();

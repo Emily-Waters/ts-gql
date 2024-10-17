@@ -8,13 +8,11 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
     type: T,
     private specifier: string,
   ) {
-    super(type);
+    super(type, `${StringUtils.capitalize(type.name)}Document`);
 
-    this.name = type.name;
     this.separator = "";
     this.eol = "\n";
-
-    this.declaration = `export const ${StringUtils.capitalize(this.name)}Document =`;
+    this.declaration = `export const ${this.name} =`;
 
     this.map();
   }
