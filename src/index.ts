@@ -15,6 +15,7 @@ export type Config = {
   options?: ConfigOptions;
 };
 
+// why just pass the argument directly back?
 export default function defineConfig(cfg: Config) {
   return cfg;
 }

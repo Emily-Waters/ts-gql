@@ -1,5 +1,6 @@
-import { GraphQLInputObjectType, GraphQLObjectType, GraphQLType } from "graphql";
+import { GraphQLInputObjectType, GraphQLObjectType, GraphQLScalarType, GraphQLType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
+import * as MoreTypeGuards from '../../guards/type-guards-alt'
 import { StringUtils } from "../string/string-utils";
 import { BaseObjectMap, MetaTypeData } from "./base";
 
@@ -23,7 +24,10 @@ export class TypeScriptObjectMap<
       this.pairs.push({ key: "__typename", value: `"${this.name}"` });
     }
 
-    const fields = this.type.getFields();
+      const fields = this.type.getFields();
+
+      // does prettier run automatically on save?
+      // as a precommit hook?
 
     for (const fieldKey in fields) {
       const { name, type } = fields[fieldKey];
@@ -37,6 +41,10 @@ export class TypeScriptObjectMap<
   }
 
   protected metaTypeData(type: GraphQLType, metaType: MetaTypeData = {}): MetaTypeData {
+    const thisWorksToo = MoreTypeGuards.isScalar(type)
+
+    if (thisWorksToo) type
+
     // TODO: handle nested lists
     if (TypeGuards.isNonNullable(type)) {
       return this.metaTypeData(type.ofType, { ...metaType, isNonNullable: true });

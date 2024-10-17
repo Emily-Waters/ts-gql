@@ -13,7 +13,7 @@
     "test": "node --inspect-brk dist/bin.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "from boilerplate? from scratch?",
   "license": "ISC",
   "description": "",
   "devDependencies": {

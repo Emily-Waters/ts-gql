@@ -74,6 +74,8 @@ export abstract class BaseObjectMap<T> {
   }
 
   protected findBaseType<T extends GraphQLType | GraphQLField<any, any>>(type: T): GraphQLType {
+    // this 'in' isnt familiar syntax to me.
+    // can you explain what it does?
     if ("ofType" in type) {
       return this.findBaseType(type.ofType);
     } else if ("type" in type) {

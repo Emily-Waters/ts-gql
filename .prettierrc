@@ -1,5 +1,5 @@
 {
-  "arrowParens": "always",
+  "arrowParens": "always",  // to wrap implicit return values in parentheses?
   "semi": true,
   "printWidth": 100,
   "bracketSameLine": false,
