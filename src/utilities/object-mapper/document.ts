@@ -4,8 +4,6 @@ import { StringUtils } from "../string/string-utils";
 import { BaseType } from "./base";
 
 export class DocumentType<T extends GraphQLField<any, any>> extends BaseType<T> {
-  private key: string;
-
   constructor(
     type: T,
     private specifier: string,
@@ -16,17 +14,17 @@ export class DocumentType<T extends GraphQLField<any, any>> extends BaseType<T> 
     this.separator = "";
     this.eol = "\n";
 
+    this.declaration = `export const ${StringUtils.capitalize(this.name)}Document =`;
+
     this.map();
   }
 
   private map() {
-    this.key =
-      `${this.specifier.toLowerCase()} ${StringUtils.capitalize(this.name)}` +
-      `${this.buildArgs(this.type.args, (arg) => `$${arg.name}: ${arg.type}`)}`;
-
-    const key = this.name + this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`);
-
-    const pair = { key, value: "", metaTypeData: { isNonNullable: true } };
+    const pair = {
+      key: `${this.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`,
+      value: "",
+      metaTypeData: { isNonNullable: true },
+    };
 
     this.buildFields(this.type.type, pair);
 
@@ -88,6 +86,9 @@ export class DocumentType<T extends GraphQLField<any, any>> extends BaseType<T> 
   }
 
   public toString() {
-    return `${this.key} ${this.buildPairs()}`;
+    return `${this.declaration}gql\`\n${
+      `${this.specifier.toLowerCase()} ${StringUtils.capitalize(this.name)}` +
+      `${this.buildArgs(this.type.args, (arg) => `$${arg.name}: ${arg.type}`)}`
+    }${this.buildPairs()}\`;`;
   }
 }

@@ -20,7 +20,8 @@ export abstract class BaseType<T> {
   protected pairs: PairDataType[] = [];
   protected separator: string;
   protected eol: string;
-  protected delimiters = { start: "{\n", end: "}" };
+  protected brackets = { open: " {\n", close: "}" };
+  protected declaration: string;
 
   protected _scalarPrimitiveTypeMap: Record<string, { input: string; output: string }> = {
     ID: { input: "string", output: "string" },
@@ -59,11 +60,11 @@ export abstract class BaseType<T> {
 
   private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {
     return (
-      `${this.delimiters.start}` +
+      `${this.brackets.open}` +
       pairs.reduce((acc, pair) => {
         return `${acc}${StringUtils.indent(this.keyValuePair(pair, depth + 1), depth + 1)}`;
       }, "") +
-      StringUtils.indent(this.delimiters.end, depth)
+      StringUtils.indent(this.brackets.close, depth)
     );
   }
 
@@ -78,6 +79,6 @@ export abstract class BaseType<T> {
   }
 
   public toString() {
-    return `export type ${this.name} =${this.buildPairs()}\n\n`;
+    return `${this.declaration}${this.buildPairs()};`;
   }
 }

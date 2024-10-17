@@ -8,7 +8,9 @@ export class UnionType extends BaseType<T> {
     this.separator = "| ";
     this.eol = "\n";
     this.name = type.name;
-    this.delimiters = { start: "", end: "" };
+    this.brackets = { open: "", close: "" };
+
+    this.declaration = `export type ${this.name} =\n`;
 
     this.map();
   }
@@ -17,9 +19,5 @@ export class UnionType extends BaseType<T> {
     for (const type of this.type.getTypes()) {
       this.pairs.push({ key: "", value: type.name, metaTypeData: { isNonNullable: true } });
     }
-  }
-
-  public toString() {
-    return `export type ${this.name} =\n${this.buildPairs()};\n\n`;
   }
 }

@@ -1,7 +1,8 @@
 import { GraphQLSchema } from "graphql";
 import { TypeGuards } from "../guards/type-guards";
+import { BaseType } from "./object-mapper/base";
+import { DocumentType } from "./object-mapper/document";
 import { EnumType } from "./object-mapper/enum";
-import { OperationType } from "./object-mapper/operation";
 import { TypeScriptObjectType } from "./object-mapper/typescript-object";
 import { UnionType } from "./object-mapper/union";
 
@@ -10,6 +11,7 @@ export interface GraphQLTypeGeneratorOptions {
 }
 
 export class GraphQLTypeGenerator {
+  private _typeMap: Map<string, BaseType<unknown>> = new Map();
   private _types = { ext: "ts", value: "" };
 
   constructor(
@@ -27,7 +29,7 @@ export class GraphQLTypeGenerator {
 
       switch (true) {
         case TypeGuards.isEnum(type):
-          this._types.value += new EnumType(type).toString();
+          this._typeMap.set(type.name, new EnumType(type));
           break;
 
         case TypeGuards.isObjectType(type):
@@ -35,20 +37,29 @@ export class GraphQLTypeGenerator {
           const isMutation = type.name === "Mutation";
 
           if (isQuery || isMutation) {
-            this._types.value += new OperationType(type).toString();
-          }
+            const fields = type.getFields();
+            for (const fieldKey in fields) {
+              const field = fields[fieldKey];
 
-          this._types.value += new TypeScriptObjectType(type).toString();
+              this._typeMap.set(field.name, new DocumentType(field, type.name));
+            }
+          } else {
+            this._typeMap.set(type.name, new TypeScriptObjectType(type));
+          }
           break;
 
         case TypeGuards.isInputObjectType(type):
-          this._types.value += new TypeScriptObjectType(type).toString();
+          this._typeMap.set(type.name, new TypeScriptObjectType(type));
           break;
 
         case TypeGuards.isUnion(type):
-          this._types.value += new UnionType(type).toString();
+          this._typeMap.set(type.name, new UnionType(type));
           break;
       }
+    }
+
+    for (const type of this._typeMap.values()) {
+      this._types.value += type.toString() + "\n\n";
     }
 
     return {

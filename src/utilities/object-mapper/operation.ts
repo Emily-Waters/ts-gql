@@ -1,13 +1,16 @@
-import { GraphQLField, GraphQLObjectType } from "graphql";
+import { GraphQLField } from "graphql";
 import { StringUtils } from "../string/string-utils";
 import { BaseType } from "./base";
 import { DocumentType } from "./document";
 
-export class OperationType<T extends GraphQLObjectType> extends BaseType<T> {
+export class OperationType<T extends GraphQLField<any, any>> extends BaseType<T> {
   private hooks: string[] = [];
   private documents: { key: string; value: string }[] = [];
 
-  constructor(type: T) {
+  constructor(
+    type: T,
+    private specifier: string,
+  ) {
     super(type);
 
     this.name = type.name;
@@ -18,25 +21,10 @@ export class OperationType<T extends GraphQLObjectType> extends BaseType<T> {
   }
 
   public map() {
-    const specifier = this.name;
-    const fields = this.type.getFields();
-
-    for (const fieldKey in fields) {
-      const field = fields[fieldKey];
-
-      this.documents.push({
-        key: field.name,
-        value: new DocumentType(field, specifier).toString(),
-      });
-
-      if (specifier === "Mutation") {
-        this.hooks.push(this.buildHook(fields[fieldKey], specifier));
-      } else {
-        for (const key of ["", "Lazy", "Suspense"]) {
-          this.hooks.push(this.buildHook(fields[fieldKey], specifier, key));
-        }
-      }
-    }
+    this.documents.push({
+      key: this.type.name,
+      value: new DocumentType(this.type, this.specifier).toString(),
+    });
   }
 
   private buildHook(field: GraphQLField<any, any>, specifier: string, modifier = "") {

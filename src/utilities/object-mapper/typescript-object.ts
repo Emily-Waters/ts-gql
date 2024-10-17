@@ -13,10 +13,16 @@ export class TypeScriptObjectType<
     this.separator = ": ";
     this.eol = ";\n";
 
+    this.declaration = `export type ${this.name} =`;
+
     this.map();
   }
 
   protected map() {
+    if (TypeGuards.isObjectType(this.type)) {
+      this.pairs.push({ key: "__typename", value: `"${this.name}"` });
+    }
+
     const fields = this.type.getFields();
 
     for (const fieldKey in fields) {
@@ -43,15 +49,5 @@ export class TypeScriptObjectType<
     } else {
       return metaType;
     }
-  }
-
-  public toString() {
-    const isInputObjectType = TypeGuards.isInputObjectType(this.type);
-
-    if (!isInputObjectType) {
-      this.pairs = [{ key: "__typename", value: `"${this.name}"` }, ...this.pairs];
-    }
-
-    return `export type ${this.name} =${this.buildPairs()}\n\n`;
   }
 }

@@ -9,6 +9,8 @@ export class EnumType<T extends GraphQLEnumType> extends BaseType<T> {
     this.eol = ",\n";
     this.name = type.name;
 
+    this.declaration = `export enum ${this.name}`;
+
     this.map();
   }
 
@@ -20,9 +22,5 @@ export class EnumType<T extends GraphQLEnumType> extends BaseType<T> {
         metaTypeData: { isNonNullable: true },
       });
     }
-  }
-
-  public toString() {
-    return `export enum ${this.name} ${this.buildPairs()}\n\n`;
   }
 }
