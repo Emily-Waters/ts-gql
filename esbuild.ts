@@ -7,7 +7,7 @@ const esbuildCommonConfig: esbuild.BuildOptions = {
   bundle: true,
   platform: "node",
   outdir: "dist",
-  external: ["ts-node"],
+  external: ["ts-node", "esbuild"],
 };
 
 main();

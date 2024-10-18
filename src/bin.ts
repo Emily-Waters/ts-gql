@@ -2,15 +2,14 @@ import { Dirent } from "fs";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import { cwd } from "process";
-import { register } from "ts-node";
+// import { register } from "ts-node";
+import { register } from "esbuild-register/dist/node";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { build } from ".";
 
-console.time("finish");
-
 async function loadAndExecuteTSFile(configName: string) {
-  register({ transpileOnly: true });
+  register();
   return await require(configName);
 }
 
@@ -73,11 +72,14 @@ async function importConfig() {
 
 (async () => {
   console.time("finish");
+
   console.time("import");
   const config = await importConfig();
   console.timeEnd("import");
+
   console.time("build");
   await build(config.default);
   console.timeEnd("build");
+
   console.timeEnd("finish");
 })();
