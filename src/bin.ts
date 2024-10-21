@@ -1,9 +1,8 @@
+import { register } from "esbuild-register/dist/node";
 import { Dirent } from "fs";
 import { readdir } from "fs/promises";
 import { join } from "path";
 import { cwd } from "process";
-// import { register } from "ts-node";
-import { register } from "esbuild-register/dist/node";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { build, Config } from ".";
