@@ -6,7 +6,8 @@ import { cwd } from "process";
 import { register } from "esbuild-register/dist/node";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { build } from ".";
+import { build, Config } from ".";
+import { Logger } from "./utilities/logger/logger";
 
 async function loadAndExecuteTSFile(configName: string) {
   register();
@@ -54,14 +55,17 @@ async function findConfigPath(
   }
 }
 
-async function importConfig() {
+async function importConfig(): Promise<{ default: Config } | Config> {
   const args = await yargs(hideBin(process.argv) as any).parse();
 
   const configName = args.config || "config.ts";
 
   const configPath = await findConfigPath(configName);
 
-  if (configPath) {
+  if (!configPath) {
+    console.error(`Config file not found: ${configName}`);
+    process.exit(1);
+  } else {
     if (configPath.endsWith(".ts")) {
       return loadAndExecuteTSFile(configPath);
     }
@@ -70,16 +74,12 @@ async function importConfig() {
   }
 }
 
-(async () => {
-  console.time("finish");
+Logger.log("Finished        ", async () => {
+  let config = await Logger.log("Importing Config", importConfig);
 
-  console.time("import");
-  const config = await importConfig();
-  console.timeEnd("import");
+  if ("default" in config) {
+    config = config.default;
+  }
 
-  console.time("build");
-  await build(config.default);
-  console.timeEnd("build");
-
-  console.timeEnd("finish");
-})();
+  await Logger.log("Building Schema ", () => build(config));
+});

@@ -1,7 +1,11 @@
 {
   "name": "ts-gql",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "bin": "dist/bin.js",
   "scripts": {
     "start": "node dist/bin.js",
     "build": "tsx esbuild.ts",
@@ -17,6 +21,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/chalk": "^0.4.31",
     "@types/node": "^22.7.5",
     "@types/yargs": "^17.0.33",
     "concurrently": "^9.0.1",
@@ -27,6 +32,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "chalk": "^5.3.0",
     "esbuild-register": "^3.6.0",
     "graphql": "^16.9.0",
     "yargs": "^17.7.2"
