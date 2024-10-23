@@ -1,26 +1,24 @@
 import { GraphQLSchema } from "graphql";
-import { TypeGuards } from "../guards/type-guards";
-import { BaseObjectMap } from "./object-mapper/base";
-import { DocumentObjectMap } from "./object-mapper/document";
-import { EnumObjectMap } from "./object-mapper/enum";
-import { HookFunctionMap } from "./object-mapper/hook";
-import { OperationObjectMap } from "./object-mapper/operation";
-import { TypeScriptObjectMap } from "./object-mapper/typescript-object";
-import { UnionObjectMap } from "./object-mapper/union";
-import { VariableObjectMap } from "./object-mapper/variables";
+import { TypeGuards } from "../../guards/type-guards";
+import { BaseObjectMap } from "./base";
+import { DocumentObjectMap } from "./document";
+import { EnumObjectMap } from "./enum";
+import { HookFunctionMap } from "./hook";
+import { OperationObjectMap } from "./operation";
+import { TypeScriptObjectMap } from "./typescript-object";
+import { UnionObjectMap } from "./union";
+import { VariableObjectMap } from "./variables";
 
-export interface GraphQLTypeGeneratorOptions {
-  maybeValue?: string;
-}
+export interface GraphQLTypeGeneratorOptions {}
 
 export class GraphQLTypeGenerator {
-  private _types = { ext: "ts", value: "" };
+  private _output = { ext: "ts", value: "" };
 
   constructor(
     _schema: GraphQLSchema,
     private _config = _schema.toConfig(),
   ) {
-    this._types.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
+    this._output.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
   }
 
   public async generate() {
@@ -71,11 +69,11 @@ export class GraphQLTypeGenerator {
     }
 
     for (const type of BaseObjectMap._typeMap.values()) {
-      this._types.value += type.toString() + "\n\n";
+      this._output.value += type.toString() + "\n\n";
     }
 
     return {
-      index: this._types,
+      index: this._output,
     };
   }
 }

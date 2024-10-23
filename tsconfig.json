@@ -8,7 +8,9 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
-    "alwaysStrict": true
+    "alwaysStrict": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "esModuleInterop": true
   },
   "include": ["esbuild.ts", "src/**/*.ts"]
 }
