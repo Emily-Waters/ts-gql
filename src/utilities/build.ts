@@ -3,6 +3,7 @@ import { Dirent } from "fs";
 import fs from "fs/promises";
 import { buildClientSchema, getIntrospectionQuery, IntrospectionQuery } from "graphql";
 import { join } from "path";
+import * as prettier from "prettier";
 import { cwd } from "process";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -86,7 +87,7 @@ async function findConfigPath(
   }
 }
 
-async function importConfig(): Promise<{ default: Config } | Config> {
+async function importConfig(): Promise<{ path: string; config: { default: Config } | Config }> {
   const args = await yargs(hideBin(process.argv) as any).parse();
 
   const configName = (args.config as string) || "config.ts";
@@ -98,10 +99,10 @@ async function importConfig(): Promise<{ default: Config } | Config> {
     process.exit(1);
   } else {
     if (configPath.endsWith(".ts")) {
-      return loadAndExecuteTSFile(configPath);
+      return { path: configPath, config: await loadAndExecuteTSFile(configPath) };
     }
 
-    return import(configPath);
+    return { path: configPath, config: await import(configPath) };
   }
 }
 
@@ -125,12 +126,25 @@ async function getSchema(gqlEndpoint: string) {
 
 export async function main() {
   Logger.log("Finished        ", async () => {
-    let config = await Logger.log("Importing Config", importConfig);
+    let { path, config } = await Logger.log("Importing Config", importConfig);
 
     if ("default" in config) {
       config = config.default;
     }
 
-    await Logger.log("Building Schema ", () => build(config));
+    const result = await Logger.log("Building Schema ", async () => await build(config));
+
+    if (config.options?.prettier) {
+      await Logger.log("Prettier        ", async () => {
+        for (const key in result) {
+          const file = result[key as keyof typeof result];
+          file.value = await prettier.format(file.value, {
+            filepath: join(cwd(), config.outDir, `${key}.${file.ext}`),
+          });
+
+          await fs.writeFile(join(cwd(), config.outDir, `${key}.${file.ext}`), file.value);
+        }
+      });
+    }
   });
 }

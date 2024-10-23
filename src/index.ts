@@ -2,6 +2,7 @@ import { GraphQLTypeGeneratorOptions } from "./utilities/object-mapper/type-gene
 
 interface ConfigOptions extends GraphQLTypeGeneratorOptions {
   clean?: boolean;
+  prettier?: boolean;
 }
 
 export type Config = {

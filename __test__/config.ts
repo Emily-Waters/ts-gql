@@ -5,5 +5,6 @@ export default defineConfig({
   outDir: "__generated__",
   options: {
     clean: true,
+    prettier: true,
   },
 });
