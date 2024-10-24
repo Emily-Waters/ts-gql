@@ -43,6 +43,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   protected eol: string = ";\n";
   protected brackets = { open: " {\n", close: "}" };
   protected declaration: string;
+  protected initialDepth: number = 0;
 
   protected _scalarPrimitiveTypeMap: Record<string, { input: string; output: string }> = {
     ID: { input: "string", output: "string" },
@@ -68,7 +69,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
     BaseObjectMap._typeMap.set(this.name, this);
   }
 
-  public buildPairs(depth: number = 0) {
+  public buildPairs(depth: number = this.initialDepth) {
     return this._buildPairs(depth, this.pairs);
   }
 

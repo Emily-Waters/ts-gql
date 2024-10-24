@@ -1,5 +1,8 @@
 export class StringUtils {
   static indent(str: string, depth: number = 1) {
+    if (depth <= 0) {
+      return str;
+    }
     return `${"  ".repeat(depth)}${str}`;
   }
 

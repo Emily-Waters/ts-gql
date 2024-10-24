@@ -15,6 +15,7 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjec
     this.brackets.open = "";
     this.brackets.close = "";
     this.declaration = "";
+    this.initialDepth = -1;
 
     this.map();
   }
