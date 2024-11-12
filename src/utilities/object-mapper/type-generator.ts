@@ -4,7 +4,6 @@ import { MapFactory } from "../alt-mapper/MapFactory";
 import { BaseObjectMap } from "./base";
 import { DocumentObjectMap } from "./document";
 import { EnumObjectMap } from "./enum";
-import { parseGql } from "./gql-parser";
 import { HookFunctionMap } from "./hook";
 import { OperationObjectMap } from "./operation";
 import { TypeScriptObjectMap } from "./typescript-object";
@@ -41,9 +40,10 @@ export class GraphQLTypeGenerator {
         case TypeGuards.isObjectType(type):
           const isQuery = type.name === "Query";
           const isMutation = type.name === "Mutation";
+          const isSubscription = type.name === "Subscription";
 
-          if (isQuery || isMutation) {
-            const typeName = type.name as "Query" | "Mutation";
+          if (isQuery || isMutation || isSubscription) {
+            const typeName = type.name as "Query" | "Mutation" | "Subscription";
             const fields = type.getFields();
 
             for (const fieldKey in fields) {
@@ -78,7 +78,7 @@ export class GraphQLTypeGenerator {
       this._output.value += type.toString() + "\n\n";
     }
 
-    await parseGql();
+    // await parseGql();
 
     return {
       index: this._output,

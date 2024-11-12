@@ -1,6 +1,6 @@
 {
-  "name": "ts-gql",
-  "version": "1.0.0",
+  "name": "@emilywaters/ts-gql",
+  "version": "1.0.2",
   "main": "dist/index.js",
   "files": [
     "dist"

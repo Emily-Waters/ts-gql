@@ -5,7 +5,7 @@ import { BaseObjectMap } from "./base";
 export class VariableObjectMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
-    private specifier: "Query" | "Mutation",
+    private specifier: "Query" | "Mutation" | "Subscription",
   ) {
     super(type, `${type.name}${specifier}Variables`);
 

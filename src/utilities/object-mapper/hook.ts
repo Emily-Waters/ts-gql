@@ -5,7 +5,7 @@ import { BaseObjectMap } from "./base";
 export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
-    private operation: "Query" | "Mutation",
+    private operation: "Query" | "Mutation" | "Subscription",
     private modifier: "Lazy" | "Suspense" | "" = "",
   ) {
     super(type, `${StringUtils.capitalize(type.name)}${operation}${modifier}Hook`);
