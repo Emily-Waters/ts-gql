@@ -1,8 +1,10 @@
 import { GraphQLSchema } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
+import { MapFactory } from "../alt-mapper/MapFactory";
 import { BaseObjectMap } from "./base";
 import { DocumentObjectMap } from "./document";
 import { EnumObjectMap } from "./enum";
+import { parseGql } from "./gql-parser";
 import { HookFunctionMap } from "./hook";
 import { OperationObjectMap } from "./operation";
 import { TypeScriptObjectMap } from "./typescript-object";
@@ -22,10 +24,14 @@ export class GraphQLTypeGenerator {
   }
 
   public async generate() {
+    const { map, create, toString } = MapFactory();
+
     for (const type of this._config.types) {
       if (/__\w+/.test(type.name)) {
         continue;
       }
+
+      create(type);
 
       switch (true) {
         case TypeGuards.isEnum(type):
@@ -71,6 +77,8 @@ export class GraphQLTypeGenerator {
     for (const type of BaseObjectMap._typeMap.values()) {
       this._output.value += type.toString() + "\n\n";
     }
+
+    await parseGql();
 
     return {
       index: this._output,

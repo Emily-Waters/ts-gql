@@ -42,7 +42,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   protected separator: string = ": ";
   protected eol: string = ";\n";
   protected brackets = { open: " {\n", close: "}" };
-  protected declaration: string;
+  protected declaration: string = "";
   protected initialDepth: number = 0;
 
   protected _scalarPrimitiveTypeMap: Record<string, { input: string; output: string }> = {

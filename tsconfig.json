@@ -10,7 +10,9 @@
     "noFallthroughCasesInSwitch": true,
     "alwaysStrict": true,
     "tsBuildInfoFile": ".tsbuildinfo",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitThis": true,
+    "strict": true
   },
   "include": ["esbuild.ts", "src/**/*.ts"]
 }
