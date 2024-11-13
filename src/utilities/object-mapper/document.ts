@@ -19,7 +19,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
 
   private map() {
     const pair = {
-      key: `${this.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`,
+      key: `${this.type.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`,
       value: "",
       metaTypeData: { isNonNullable: true },
     };
