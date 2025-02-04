@@ -17,6 +17,8 @@ export type Config = {
   gqlEndpoint: string;
   /**  The output directory, defaults to "__\_\_generated\_\___"  */
   outDir: string;
+  /** Local .graphql documents */
+  documents?: string[];
   /** Additional options */
   options?: ConfigOptions;
 };
