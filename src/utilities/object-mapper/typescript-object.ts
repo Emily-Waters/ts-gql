@@ -9,6 +9,8 @@ export class TypeScriptObjectMap<
   constructor(type: T) {
     super(type);
 
+    this._type = "object";
+
     this.separator = ": ";
     this.eol = ";\n";
     this.declaration = `export type ${this.name} =`;
@@ -18,20 +20,23 @@ export class TypeScriptObjectMap<
 
   protected map() {
     if (TypeGuards.isObjectType(this.type)) {
-      this.pairs.push({ key: "__typename", value: `"${this.name}"` });
+      this.pairs.push({
+        key: "__typename",
+        value: `"${this.name}"`,
+        description: this.type.description,
+      });
     }
 
     const fields = this.type.getFields();
 
     for (const fieldKey in fields) {
-      const { name, type } = fields[fieldKey];
-
-      const baseType = this.findBaseType(type);
+      const field = fields[fieldKey];
 
       this.pairs.push({
-        key: name,
-        value: StringUtils.stripNonAlpha(type.toString()),
-        metaTypeData: this.metaTypeData(type),
+        key: field.name,
+        value: StringUtils.stripNonAlpha(field.type.toString()),
+        metaTypeData: this.metaTypeData(field.type),
+        description: field.description,
       });
     }
   }

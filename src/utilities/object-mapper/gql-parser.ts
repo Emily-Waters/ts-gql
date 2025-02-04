@@ -36,12 +36,12 @@ export async function parseGql() {
 
     if (type) {
       const typeStr = type[1];
-      console.log(typeStr);
+      console.log({ typeStr });
     }
 
     if (name) {
       const nameStr = name[1];
-      console.log(nameStr);
+      console.log({ nameStr });
     }
 
     if (args) {

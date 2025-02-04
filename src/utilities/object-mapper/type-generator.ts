@@ -9,6 +9,7 @@ import { OperationObjectMap } from "./operation";
 import { TypeScriptObjectMap } from "./typescript-object";
 import { UnionObjectMap } from "./union";
 import { VariableObjectMap } from "./variables";
+import { parseGql } from "./gql-parser";
 
 export interface GraphQLTypeGeneratorOptions {}
 

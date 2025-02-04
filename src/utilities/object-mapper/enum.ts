@@ -5,6 +5,8 @@ export class EnumObjectMap<T extends GraphQLEnumType> extends BaseObjectMap<T> {
   constructor(type: T) {
     super(type);
 
+    this._type = "enum";
+
     this.terminator = "";
     this.separator = " = ";
     this.eol = ",\n";
@@ -19,6 +21,7 @@ export class EnumObjectMap<T extends GraphQLEnumType> extends BaseObjectMap<T> {
         key: field.name,
         value: `"${field.value}"`,
         metaTypeData: { isNonNullable: true },
+        description: field.description,
       });
     }
   }

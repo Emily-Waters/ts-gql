@@ -9,6 +9,7 @@ import {
 } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
+import { Maybe } from "graphql/jsutils/Maybe";
 
 export type MetaTypeData = {
   isNonNullable?: boolean;
@@ -21,6 +22,7 @@ type PairDataType = {
   key: string;
   value: string | PairDataType[];
   metaTypeData?: MetaTypeData;
+  description?: Maybe<string>;
 };
 
 type MappableTypes =
@@ -32,6 +34,8 @@ type MappableTypes =
   | GraphQLScalarType;
 
 export abstract class BaseObjectMap<T extends MappableTypes> {
+  protected _type: string = "base";
+
   static instanceCount = 0;
   static _typeMap: Map<string, BaseObjectMap<MappableTypes>> = new Map();
 
@@ -102,7 +106,16 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
     return (
       `${this.brackets.open}` +
       pairs.reduce((acc, pair) => {
-        return `${acc}${StringUtils.indent(this.keyValuePair(pair, depth + 1), depth + 1)}`;
+        let value = this.keyValuePair(pair, depth + 1);
+        value = StringUtils.indent(value, depth + 1);
+
+        let description = "";
+
+        if (pair.description && this._type !== "document") {
+          description = StringUtils.indent(`/** ${pair.description} */\n`);
+        }
+
+        return `${acc}${description}${value}`;
       }, "") +
       StringUtils.indent(this.brackets.close, depth)
     );

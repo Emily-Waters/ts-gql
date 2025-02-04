@@ -10,6 +10,8 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjec
   ) {
     super(type, `${StringUtils.capitalize(type.name)}${operation}${modifier}Hook`);
 
+    this._type = "hook";
+
     this.separator = "";
     this.eol = "";
     this.brackets.open = "";

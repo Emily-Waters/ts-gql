@@ -9,6 +9,8 @@ export class OperationObjectMap<T extends GraphQLField<any, any>> extends BaseOb
   ) {
     super(type, `${StringUtils.capitalize(type.name)}${specifier}Result`);
 
+    this._type = "operation";
+
     this.separator = ": ";
     this.eol = ";\n";
     this.declaration = `export type ${this.name} =`;
@@ -26,6 +28,7 @@ export class OperationObjectMap<T extends GraphQLField<any, any>> extends BaseOb
       key: this.type.name,
       value: StringUtils.stripNonAlpha(baseType.toString()),
       metaTypeData,
+      description: this.type.description,
     });
   }
 }

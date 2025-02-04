@@ -10,6 +10,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
   ) {
     super(type, `${StringUtils.capitalize(type.name)}Document`);
 
+    this._type = "document";
     this.separator = "";
     this.eol = "\n";
     this.declaration = `export const ${this.name} =`;
@@ -18,10 +19,11 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
   }
 
   private map() {
-    const pair = {
+    const pair: (typeof this.pairs)[number] = {
       key: `${this.type.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`,
       value: "",
       metaTypeData: { isNonNullable: true },
+      description: this.type.description,
     };
 
     this.buildFields(this.type.type, pair);
@@ -51,7 +53,12 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
       for (const fieldKey in fields) {
         const field = fields[fieldKey];
         const baseField = this.findBaseType(field);
-        const nestedPair = { key: field.name, value: "", metaTypeData: { isNonNullable: true } };
+        const nestedPair: (typeof this.pairs)[number] = {
+          key: field.name,
+          value: "",
+          metaTypeData: { isNonNullable: true },
+          description: field.description,
+        };
 
         if (TypeGuards.isObjectType(baseField)) {
           this.buildFields(baseField, nestedPair);
@@ -71,10 +78,11 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
     pair.value = [];
 
     for (const type of types) {
-      const nestedPair = {
+      const nestedPair: (typeof this.pairs)[number] = {
         key: `... on ${type.name}`,
         value: [],
         metaTypeData: { isNonNullable: true },
+        description: type.description,
       };
 
       this.buildFields(type, nestedPair);

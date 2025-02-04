@@ -9,6 +9,8 @@ export class VariableObjectMap<T extends GraphQLField<any, any>> extends BaseObj
   ) {
     super(type, `${type.name}${specifier}Variables`);
 
+    this._type = "variables";
+
     this.separator = ": ";
     this.eol = ";\n";
     this.declaration = `export type ${StringUtils.capitalize(type.name)}${this.specifier}Variables =`;
@@ -26,6 +28,7 @@ export class VariableObjectMap<T extends GraphQLField<any, any>> extends BaseObj
         key: arg.name,
         value: StringUtils.stripNonAlpha(baseType.toString()),
         metaTypeData,
+        description: arg.description,
       });
     }
   }
