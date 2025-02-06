@@ -31,6 +31,10 @@ export class GraphQLTypeGenerator {
     if (options?.withApollo) {
       this._output.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
     }
+
+    let maybeValue = options?.maybeValue || "T | null";
+
+    this._output.value += `type Maybe<T> = ${maybeValue};\n\n`;
   }
 
   public async generate() {

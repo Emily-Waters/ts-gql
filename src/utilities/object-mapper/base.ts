@@ -79,10 +79,6 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   }
 
   protected keyValuePair({ key, value, metaTypeData }: PairDataType, depth = 0) {
-    if (!metaTypeData?.isNonNullable) {
-      key += "?";
-    }
-
     if (typeof value === "string") {
       if (metaTypeData?.isScalar) {
         const scalarDataField = TypeGuards.isInputObjectType(this.type) ? "input" : "output";
@@ -92,11 +88,17 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
       if (metaTypeData?.isList) {
         value += "[]";
       }
-
-      return `${key}${this.separator}${value}${this.eol}`;
+    } else {
+      value = this._buildPairs(depth, value);
     }
 
-    return `${key}${this.separator}${this._buildPairs(depth, value)}${this.eol}`;
+    if (key === "__typename") {
+      key += "?";
+    } else if (!metaTypeData?.isNonNullable) {
+      value = `Maybe<${value}>`;
+    }
+
+    return `${key}${this.separator}${value}${this.eol}`;
   }
 
   private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {

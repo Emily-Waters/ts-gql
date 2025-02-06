@@ -3,8 +3,12 @@ import { GraphQLTypeGeneratorOptions } from "./utilities/object-mapper/type-gene
 interface ConfigOptions extends GraphQLTypeGeneratorOptions {
   /** Whether to clean the output directory before generating the files */
   clean?: boolean;
+  /** Include Apollo Hooks */
   withApollo?: boolean;
+  /** Include refetch functions for Apollo */
   withRefetch?: boolean;
+  /** Maybe value, defaults to "T | null" */
+  maybeValue?: string;
 }
 
 /** Configuration options.

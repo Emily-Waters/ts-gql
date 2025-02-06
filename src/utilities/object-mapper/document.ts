@@ -13,7 +13,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
     this._type = "document";
     this.separator = "";
     this.eol = "\n";
-    this.declaration = `export const ${this.name} =`;
+    this.declaration = `export const ${this.name} = `;
 
     this.map();
   }

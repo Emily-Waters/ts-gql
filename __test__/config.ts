@@ -6,6 +6,8 @@ export default defineConfig({
   documents: ["**/*.gql"],
   options: {
     clean: true,
+    withApollo: true,
+    withRefetch: true,
   },
   scalarMap: {
     Timestamp: {

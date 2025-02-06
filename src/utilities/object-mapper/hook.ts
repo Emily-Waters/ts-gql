@@ -60,6 +60,7 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjec
     const operationName = StringUtils.capitalize(this.operation);
 
     return [
+      "",
       `export function refetch${fieldName}${operationName}(`,
       `  variables?: ${fieldName}${operationName}Variables,`,
       `) {`,
