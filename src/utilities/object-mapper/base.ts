@@ -7,9 +7,10 @@ import {
   GraphQLType,
   GraphQLUnionType,
 } from "graphql";
+import { Maybe } from "graphql/jsutils/Maybe";
+import { Config } from "../..";
 import { TypeGuards } from "../../guards/type-guards";
 import { StringUtils } from "../string/string-utils";
-import { Maybe } from "graphql/jsutils/Maybe";
 
 export type MetaTypeData = {
   isNonNullable?: boolean;
@@ -49,7 +50,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   protected declaration: string = "";
   protected initialDepth: number = 0;
 
-  protected _scalarPrimitiveTypeMap: Record<string, { input: string; output: string }> = {
+  static _scalarPrimitiveTypeMap: NonNullable<Config["scalarMap"]> = {
     ID: { input: "string", output: "string" },
     String: { input: "string", output: "string" },
     Int: { input: "number", output: "number" },
@@ -85,7 +86,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
     if (typeof value === "string") {
       if (metaTypeData?.isScalar) {
         const scalarDataField = TypeGuards.isInputObjectType(this.type) ? "input" : "output";
-        value = this._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
+        value = BaseObjectMap._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
       }
 
       if (metaTypeData?.isList) {
@@ -148,5 +149,9 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
 
   public toString() {
     return `${this.declaration}${this.buildPairs()}${this.terminator}`;
+  }
+
+  static extendScalarMap(scalarMap: Config["scalarMap"]) {
+    this._scalarPrimitiveTypeMap = { ...this._scalarPrimitiveTypeMap, ...scalarMap };
   }
 }

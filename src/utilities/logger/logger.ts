@@ -10,13 +10,27 @@ export class Logger {
     let pos = 0;
     let time = Date.now();
 
+    const msgLen = 50;
+
+    let padMsg = msg.padEnd(msgLen, " ");
+
+    if (padMsg.length > msgLen) {
+      padMsg = padMsg.slice(0, msgLen - 3) + "...";
+    }
+
+    progress();
+    const result = await cb();
+    finish();
+
+    return result;
+
     function progress() {
       if (interval) {
         clearInterval(interval);
       }
 
       interval = setInterval(() => {
-        process.stdout.write(`\r${chalk.yellow(`${spin[pos]}${spin[pos + 1]}`)} ${msg} `);
+        process.stdout.write(`\r${chalk.yellow(`${spin[pos]}${spin[pos + 1]}`)} ${padMsg} `);
         pos = (pos + 2) % len;
       }, period);
     }
@@ -26,13 +40,10 @@ export class Logger {
         clearInterval(interval);
       }
 
-      process.stdout.write(`\r${chalk.green(` \u2713`)} ${msg} ${Date.now() - time}ms\n`);
+      const diff = Date.now() - time;
+      const timeStr = `${diff}ms`.padStart(6, " ");
+
+      process.stdout.write(`\r${chalk.green(` \u2713`)} ${padMsg} ${timeStr}\n`);
     }
-
-    progress();
-    const result = await cb();
-    finish();
-
-    return result;
   }
 }

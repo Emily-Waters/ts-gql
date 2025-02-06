@@ -1,4 +1,6 @@
 import { GraphQLSchema } from "graphql";
+import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
+import { Config } from "../..";
 import { TypeGuards } from "../../guards/type-guards";
 import { BaseObjectMap } from "./base";
 import { DocumentObjectMap } from "./document";
@@ -13,16 +15,26 @@ export interface GraphQLTypeGeneratorOptions {}
 
 export class GraphQLTypeGenerator {
   private _output = { ext: "ts", value: "" };
+  private _normalizedSchema: GraphQLSchemaNormalizedConfig;
 
   constructor(
     _schema: GraphQLSchema,
-    private _config = _schema.toConfig(),
+    private options: Config["options"],
+    private _scalarMap?: Config["scalarMap"],
   ) {
-    this._output.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
+    this._normalizedSchema = _schema.toConfig();
+
+    if (this._scalarMap) {
+      BaseObjectMap.extendScalarMap(this._scalarMap);
+    }
+
+    if (options?.withApollo) {
+      this._output.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
+    }
   }
 
   public async generate() {
-    for (const type of this._config.types) {
+    for (const type of this._normalizedSchema.types) {
       if (/__\w+/.test(type.name)) {
         continue;
       }
@@ -41,17 +53,19 @@ export class GraphQLTypeGenerator {
             const typeName = type.name as "Query" | "Mutation" | "Subscription";
             const fields = type.getFields();
 
-            for (const fieldKey in fields) {
-              const field = fields[fieldKey];
+            if (this.options?.withApollo) {
+              for (const fieldKey in fields) {
+                const field = fields[fieldKey];
 
-              new DocumentObjectMap(field, typeName);
-              new OperationObjectMap(field, typeName);
-              new VariableObjectMap(field, typeName);
-              new HookFunctionMap(field, typeName);
+                new DocumentObjectMap(field, typeName);
+                new OperationObjectMap(field, typeName);
+                new VariableObjectMap(field, typeName);
+                new HookFunctionMap(field, typeName, "", this.options);
 
-              if (isQuery) {
-                new HookFunctionMap(field, typeName, "Lazy");
-                new HookFunctionMap(field, typeName, "Suspense");
+                if (isQuery) {
+                  new HookFunctionMap(field, typeName, "Lazy", this.options);
+                  new HookFunctionMap(field, typeName, "Suspense", this.options);
+                }
               }
             }
           }

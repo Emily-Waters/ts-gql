@@ -3,8 +3,8 @@ import { GraphQLTypeGeneratorOptions } from "./utilities/object-mapper/type-gene
 interface ConfigOptions extends GraphQLTypeGeneratorOptions {
   /** Whether to clean the output directory before generating the files */
   clean?: boolean;
-  /** Whether to run the prettier formatter on the generated files */
-  prettier?: boolean;
+  withApollo?: boolean;
+  withRefetch?: boolean;
 }
 
 /** Configuration options.
@@ -21,6 +21,8 @@ export type Config = {
   documents?: string[];
   /** Additional options */
   options?: ConfigOptions;
+  /** Custom Scalars */
+  scalarMap?: Record<string, { input: string; output: string }>;
 };
 
 /** Define the configuration options.
