@@ -1,6 +1,6 @@
 {
   "name": "@emilywaters/ts-gql",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "dist/index.js",
   "files": [
     "dist"
@@ -12,7 +12,7 @@
     "start": "node dist/cli.js",
     "build": "tsup src --splitting --clean --dts",
     "tsc": "tsc --noEmit --preserveWatchOutput",
-    "dev": "tsup src --watch --ignore-watch __generated__ --onSuccess \"npm run tsc && node dist/cli.js\"",
+    "dev": "tsup src --watch --ignore-watch __generated__ --onSuccess \"npm run tsc && node dist/cli.js --config config.ts\"",
     "test": "node --inspect-brk dist/bin.js"
   },
   "keywords": [],
@@ -20,11 +20,14 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@apollo/server": "^4.11.3",
     "@types/chalk": "^0.4.31",
+    "@types/express": "^5.0.1",
     "@types/node": "^22.7.5",
     "@types/yargs": "^17.0.33",
     "concurrently": "^9.0.1",
     "esbuild": "^0.24.0",
+    "express": "^5.1.0",
     "prettier": "^3.3.3",
     "tsup": "^8.3.0",
     "tsx": "^4.19.1",
@@ -32,8 +35,10 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "@emilywaters/emdash": "^1.0.9",
     "bundle-require": "^5.0.0",
     "chalk": "^4.1.2",
+    "emdash": "^0.0.0-b",
     "glob": "^11.0.1",
     "graphql": "^16.9.0",
     "yargs": "^17.7.2"

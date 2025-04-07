@@ -1,14 +1,17 @@
+import emdash from "@emilywaters/emdash";
 import { GraphQLArgument, GraphQLField, GraphQLType, GraphQLUnionType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
-import { StringUtils } from "../string/string-utils";
+import { getBaseType } from "../find-base-type";
 import { BaseObjectMap } from "./base";
 
 export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
   constructor(
     type: T,
-    private specifier: string,
+    private operation: string,
   ) {
-    super(type, `${StringUtils.capitalize(type.name)}Document`);
+    const fieldName = emdash.string.capitalize(type.name);
+    const operationName = emdash.string.capitalize(operation);
+    super(type, `${fieldName}${operationName}Document`);
 
     this._type = "document";
     this.separator = "";
@@ -43,16 +46,16 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
   }
 
   private buildFields(type: GraphQLType, pair: (typeof this.pairs)[number]) {
-    const baseType = this.findBaseType(type);
+    const baseType = getBaseType(type);
 
-    if (TypeGuards.isObjectType(baseType)) {
+    if (TypeGuards.isObject(baseType)) {
       pair.value = [];
 
       const fields = baseType.getFields();
 
       for (const fieldKey in fields) {
         const field = fields[fieldKey];
-        const baseField = this.findBaseType(field);
+        const baseField = getBaseType(field);
         const nestedPair: (typeof this.pairs)[number] = {
           key: field.name,
           value: "",
@@ -60,7 +63,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
           description: field.description,
         };
 
-        if (TypeGuards.isObjectType(baseField)) {
+        if (TypeGuards.isObject(baseField)) {
           this.buildFields(baseField, nestedPair);
         } else if (TypeGuards.isUnion(baseField)) {
           this.buildFragment(baseField, nestedPair);
@@ -93,7 +96,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
 
   public toString() {
     return `${this.declaration}gql\`\n${
-      `${this.specifier.toLowerCase()} ${StringUtils.capitalize(this.name)}` +
+      `${this.operation.toLowerCase()} ${emdash.string.capitalize(this.name)}` +
       `${this.buildArgs(this.type.args, (arg) => `$${arg.name}: ${arg.type}`)}`
     }${this.buildPairs()}\`;`;
   }

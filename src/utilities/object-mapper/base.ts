@@ -1,3 +1,4 @@
+import emdash from "@emilywaters/emdash";
 import {
   GraphQLEnumType,
   GraphQLField,
@@ -10,7 +11,6 @@ import {
 import { Maybe } from "graphql/jsutils/Maybe";
 import { Config } from "../..";
 import { TypeGuards } from "../../guards/type-guards";
-import { StringUtils } from "../string/string-utils";
 
 export type MetaTypeData = {
   isNonNullable?: boolean;
@@ -51,11 +51,11 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   protected initialDepth: number = 0;
 
   static _scalarPrimitiveTypeMap: NonNullable<Config["scalarMap"]> = {
-    ID: { input: "string", output: "string" },
-    String: { input: "string", output: "string" },
-    Int: { input: "number", output: "number" },
-    Float: { input: "number", output: "number" },
-    Boolean: { input: "boolean", output: "boolean" },
+    ID: "string",
+    String: "string",
+    Int: "number",
+    Float: "number",
+    Boolean: "boolean",
   };
 
   constructor(
@@ -65,11 +65,6 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
     if (!this.name) {
       this.name = name || type.name;
     }
-
-    // if (BaseObjectMap._typeMap.has(this.name)) {
-    //   console.error(`ERROR: Type with name ${this.name} already exists`);
-    //   process.exit(1);
-    // }
 
     BaseObjectMap._typeMap.set(this.name, this);
   }
@@ -81,8 +76,7 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
   protected keyValuePair({ key, value, metaTypeData }: PairDataType, depth = 0) {
     if (typeof value === "string") {
       if (metaTypeData?.isScalar) {
-        const scalarDataField = TypeGuards.isInputObjectType(this.type) ? "input" : "output";
-        value = BaseObjectMap._scalarPrimitiveTypeMap[value]?.[scalarDataField] || "any";
+        value = BaseObjectMap._scalarPrimitiveTypeMap[value] || "any";
       }
 
       if (metaTypeData?.isList) {
@@ -106,21 +100,30 @@ export abstract class BaseObjectMap<T extends MappableTypes> {
       return this.emptyPairValue;
     }
 
+    function remapPairs(pairs: PairDataType[]): any {
+      return pairs.map((pair) => {
+        if (pair.value && typeof pair.value === "object") {
+          return { ...pair, value: remapPairs(pair.value) };
+        }
+        return pair;
+      });
+    }
+
     return (
       `${this.brackets.open}` +
       pairs.reduce((acc, pair) => {
-        let value = this.keyValuePair(pair, depth + 1);
-        value = StringUtils.indent(value, depth + 1);
+        let value = this.keyValuePair(pair, depth + 2);
+        value = emdash.string.indent(value, depth + 2);
 
         let description = "";
 
         if (pair.description && this._type !== "document") {
-          description = StringUtils.indent(`/** ${pair.description} */\n`);
+          description = emdash.string.indent(`/** ${pair.description} */\n`, 2);
         }
 
         return `${acc}${description}${value}`;
       }, "") +
-      StringUtils.indent(this.brackets.close, depth)
+      emdash.string.indent(this.brackets.close, depth)
     );
   }
 

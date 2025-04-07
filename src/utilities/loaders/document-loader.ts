@@ -1,6 +1,9 @@
+import fs from "fs";
 import { glob } from "glob";
 import { buildSchema, GraphQLSchema, parse, printSchema } from "graphql";
 import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { cwd } from "node:process";
 import { OperationToSDLConverter } from "./sdl-converter";
 
 export class OperationDocumentLoader {
@@ -25,6 +28,7 @@ export class OperationDocumentLoader {
       schema += sdl;
     }
 
+    await fs.promises.writeFile(path.join(cwd(), "__test__", "extend.graphql"), schema, "utf-8");
     return buildSchema(schema);
   }
 }

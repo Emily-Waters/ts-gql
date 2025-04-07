@@ -26,7 +26,7 @@ export type Config = {
   /** Additional options */
   options?: ConfigOptions;
   /** Custom Scalars */
-  scalarMap?: Record<string, { input: string; output: string }>;
+  scalarMap?: Record<string, string>;
 };
 
 /** Define the configuration options.

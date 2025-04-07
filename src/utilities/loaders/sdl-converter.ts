@@ -1,3 +1,4 @@
+import emdash from "@emilywaters/emdash";
 import {
   DocumentNode,
   FieldNode,
@@ -7,10 +8,10 @@ import {
   OperationDefinitionNode,
   VariableDefinitionNode,
 } from "graphql";
-import { StringUtils } from "../string/string-utils";
 
 export class OperationToSDLConverter {
   private argNameMapping: { [operationName: string]: { [originalName: string]: string } } = {};
+  private processedOperations: Set<string> = new Set();
 
   constructor(private schema: GraphQLSchema) {}
 
@@ -22,55 +23,80 @@ export class OperationToSDLConverter {
     const sdl: string[] = [];
 
     operations.forEach((operation) => {
-      const fields: string[] = [];
-      const operationName =
-        operation.name?.value || `Unnamed${StringUtils.capitalize(operation.operation)}`;
-      const returnType = `${StringUtils.capitalize(operationName)}${StringUtils.capitalize(operation.operation)}Result`;
+      if (operation.variableDefinitions && operation.variableDefinitions.length > 0) {
+        sdl.push(this.buildVariablesType(operation));
+      }
+    });
 
+    // Second pass: Create result types for each operation
+    operations.forEach((operation) => {
+      const operationName =
+        operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
+      const returnType = `${emdash.string.capitalize(operationName)}`;
+
+      // Build result type
       sdl.push(`type ${returnType} {`);
 
+      // Add __typename field first
+      // sdl.push(`  __typename: "${emdash.string.capitalize(operation.operation)}"`);
+
+      // Process each top-level field in the operation for result type
       for (const selection of operation.selectionSet.selections) {
         if (selection.kind === Kind.FIELD) {
-          const field = this.processField(selection, this.getRootType(operation.operation));
+          const field = selection as FieldNode;
+          const fieldName = field.name.value;
+          const rootType = this.getRootType(operation.operation);
+          if (!rootType) continue;
 
-          if (field) {
-            fields.push(`  ${field}`);
-          }
+          const schemaField = rootType.getFields()[fieldName];
+          if (!schemaField) continue;
+
+          // Get the actual return type from the schema
+          const returnTypeName = schemaField.type.toString();
+
+          // Add the field with its return type
+          sdl.push(`  ${fieldName}: ${returnTypeName}`);
         }
       }
 
-      const mappedArgs = operation.variableDefinitions
-        ?.map((varDef) => this.mapArgument(operation.name?.value, varDef))
-        .filter(Boolean);
+      sdl.push("}");
 
-      sdl.push(`${fields.join("\n")}\n}`);
-      sdl.push(`extend type ${StringUtils.capitalize(operation.operation)} {
-    ${operationName}${mappedArgs && mappedArgs.length > 0 ? `(${mappedArgs.join(", ")})` : ""}: ${returnType}
-  }`);
-      //       } else if (operation.operation === "query") {
-      //         const combinedFields: string[] = [];
-      //         const operationName = operation.name?.value || "UnnamedQuery";
-      //         const returnType = `${operationName}Payload`;
+      // Mark this operation as processed
+      this.processedOperations.add(operationName);
+    });
 
-      //         sdl.push(`type ${returnType} {`);
+    // Third pass: Extend Query/Mutation types to include operations
+    operations.forEach((operation) => {
+      const operationName =
+        operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
+      const returnType = `${emdash.string.capitalize(operationName)}`;
+      const rootTypeName = emdash.string.capitalize(operation.operation);
 
-      //         operation.selectionSet.selections.forEach((selection) => {
-      //           if (selection.kind === Kind.FIELD) {
-      //             const fieldSDL = this.processField(selection as FieldNode, this.getRootType("query"));
-      //             if (fieldSDL) {
-      //               combinedFields.push(`  ${fieldSDL}`);
-      //             }
-      //           }
-      //         });
+      const mappedArgs = operation.variableDefinitions?.length
+        ? `(${operation.variableDefinitions
+            .map((varDef) => this.mapArgument(operation.name?.value, varDef))
+            .filter(Boolean)
+            .join(", ")})`
+        : "";
 
-      //         sdl.push(`${combinedFields.join("\n")}\n}`);
-      //         sdl.push(`extend type Query {
-      //     ${operationName}: ${returnType}
-      //   }`);
-      //       }
+      sdl.push(`extend type ${rootTypeName} {
+  ${operationName}${mappedArgs}: ${returnType}
+}`);
     });
 
     return sdl.join("\n\n");
+  }
+
+  private buildVariablesType(operation: OperationDefinitionNode): string {
+    const operationName =
+      operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
+    const typeName = `${emdash.string.capitalize(operationName)}Input`;
+
+    const args = operation.variableDefinitions
+      ?.map((varDef) => `  ${varDef.variable.name.value}: ${this.getTypeFromNode(varDef.type)}`)
+      .join("\n");
+
+    return `type ${typeName} {\n${args}\n}`;
   }
 
   private mapArgument(
@@ -93,6 +119,8 @@ export class OperationToSDLConverter {
         return this.schema.getQueryType() || null;
       case "mutation":
         return this.schema.getMutationType() || null;
+      case "subscription":
+        return this.schema.getSubscriptionType() || null;
       default:
         return null;
     }
@@ -107,24 +135,5 @@ export class OperationToSDLConverter {
       return typeNode.name.value;
     }
     return "unknown";
-  }
-
-  private processField(field: FieldNode, parentType: GraphQLObjectType | null): string | null {
-    if (!parentType) return null;
-
-    const name = field.name.value;
-    const schemaField = parentType.getFields()[name];
-    if (!schemaField) return null;
-
-    const args = field.arguments?.map((arg) => {
-      const schemaArg = schemaField.args.find((a) => a.name === arg.name.value);
-      const argName = arg.name.value;
-      const argType = schemaArg ? schemaArg.type.toString() : "String";
-      return `${argName}: ${argType}`;
-    });
-
-    const argsStr = args?.length ? `(${args.join(", ")})` : "";
-
-    return `${name}${argsStr}: ${schemaField.type.toString()}`;
   }
 }

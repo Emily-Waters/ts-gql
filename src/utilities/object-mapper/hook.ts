@@ -1,54 +1,34 @@
+import emdash from "@emilywaters/emdash";
 import { GraphQLField } from "graphql";
 import { Config } from "../..";
-import { StringUtils } from "../string/string-utils";
-import { BaseObjectMap } from "./base";
 
-export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
+export class HookFunctionMap<T extends GraphQLField<any, any>> {
   constructor(
-    type: T,
-    private operation: "Query" | "Mutation" | "Subscription",
+    private type: T,
+    private operation: string,
     private modifier: "Lazy" | "Suspense" | "",
     private options: Config["options"],
-  ) {
-    super(type, `${StringUtils.capitalize(type.name)}${operation}${modifier}Hook`);
-
-    this._type = "hook";
-
-    this.separator = "";
-    this.eol = "";
-    this.brackets.open = "";
-    this.brackets.close = "";
-    this.declaration = "";
-    this.initialDepth = -1;
-
-    this.map();
-  }
-
-  private map() {
-    this.pairs.push({
-      key: "",
-      value: [this.buildHook(), this.buildRefetch()].join("\n"),
-      metaTypeData: { isNonNullable: true },
-    });
-  }
+  ) {}
 
   private buildHook() {
-    const fieldName = StringUtils.capitalize(this.type.name);
-    const operationName = StringUtils.capitalize(this.operation);
-    const Pick = `Pick<${operationName}, '__typename' | '${this.type.name}'>`;
+    const fieldName = emdash.string.capitalize(this.type.name);
+    const operationName = emdash.string.capitalize(this.operation);
+    const returnType = `${fieldName}${operationName}Result`;
+    const inputType = `${fieldName}${operationName}Input`;
+    const documentName = `${fieldName}${operationName}Document`;
 
     return [
       `export function use${fieldName}${this.modifier}${operationName}(`,
       `  baseOptions?: Apollo.${this.modifier}${operationName}HookOptions<`,
-      `    ${Pick},`,
-      `    ${fieldName}${operationName}Variables`,
+      `    ${returnType},`,
+      `    ${inputType}`,
       `  >,`,
       `) {`,
       `  return Apollo.use${this.modifier}${operationName}<`,
-      `    ${Pick},`,
-      `    ${fieldName}${operationName}Variables`,
-      `  >(${fieldName}Document, baseOptions);`,
-      `}`,
+      `    ${returnType},`,
+      `    ${inputType}`,
+      `  >(${documentName}, baseOptions);`,
+      `};`,
     ].join("\n");
   }
 
@@ -56,16 +36,21 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> extends BaseObjec
     if (this.operation !== "Query" || this.modifier) return "";
     if (!this.options?.withRefetch) return "";
 
-    const fieldName = StringUtils.capitalize(this.type.name);
-    const operationName = StringUtils.capitalize(this.operation);
+    const fieldName = emdash.string.capitalize(this.type.name);
+    const operationName = emdash.string.capitalize(this.operation);
+    const inputType = `${fieldName}${operationName}Input`;
+    const documentName = `${fieldName}${operationName}Document`;
 
     return [
-      "",
       `export function refetch${fieldName}${operationName}(`,
-      `  variables?: ${fieldName}${operationName}Variables,`,
+      `  variables?: ${inputType},`,
       `) {`,
-      `  return { query: ${fieldName}Document, variables };`,
-      `}`,
+      `  return { query: ${documentName}, variables };`,
+      `};`,
     ].join("\n");
+  }
+
+  toString() {
+    return [this.buildHook(), this.buildRefetch()].join("\n\n");
   }
 }

@@ -2,20 +2,20 @@ import { GraphQLSchema } from "graphql";
 import { GraphQLSchemaNormalizedConfig } from "graphql/type/schema";
 import { Config } from "../..";
 import { TypeGuards } from "../../guards/type-guards";
-import { BaseObjectMap } from "./base";
+import { ASTBuilder } from "./ast/ast";
+import { OperationKeywords } from "./constants";
 import { DocumentObjectMap } from "./document";
-import { EnumObjectMap } from "./enum";
 import { HookFunctionMap } from "./hook";
-import { OperationObjectMap } from "./operation";
-import { TypeScriptObjectMap } from "./typescript-object";
-import { UnionObjectMap } from "./union";
-import { VariableObjectMap } from "./variables";
 
 export interface GraphQLTypeGeneratorOptions {}
 
 export class GraphQLTypeGenerator {
   private _output = { ext: "ts", value: "" };
   private _normalizedSchema: GraphQLSchemaNormalizedConfig;
+
+  private add(value: string) {
+    this._output.value += `\n\n${value}`;
+  }
 
   constructor(
     _schema: GraphQLSchema,
@@ -24,72 +24,55 @@ export class GraphQLTypeGenerator {
   ) {
     this._normalizedSchema = _schema.toConfig();
 
-    if (this._scalarMap) {
-      BaseObjectMap.extendScalarMap(this._scalarMap);
-    }
-
     if (options?.withApollo) {
-      this._output.value = `import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";\n\n`;
+      this.add(`import { gql } from "@apollo/client";\nimport * as Apollo from "@apollo/client";`);
     }
 
     let maybeValue = options?.maybeValue || "T | null";
 
-    this._output.value += `type Maybe<T> = ${maybeValue};\n\n`;
+    this.add(`type Maybe<T> = ${maybeValue};`);
   }
 
   public async generate() {
+    const ast = new ASTBuilder(this._scalarMap);
+
     for (const type of this._normalizedSchema.types) {
       if (/__\w+/.test(type.name)) {
         continue;
       }
 
-      switch (true) {
-        case TypeGuards.isEnum(type):
-          new EnumObjectMap(type);
-          break;
+      ast.build(type);
 
-        case TypeGuards.isObjectType(type):
-          const isQuery = type.name === "Query";
-          const isMutation = type.name === "Mutation";
-          const isSubscription = type.name === "Subscription";
+      if (TypeGuards.isObject(type)) {
+        const operation = OperationKeywords[type.name];
 
-          if (isQuery || isMutation || isSubscription) {
-            const typeName = type.name as "Query" | "Mutation" | "Subscription";
-            const fields = type.getFields();
+        if (operation) {
+          const fields = type.getFields();
 
-            if (this.options?.withApollo) {
-              for (const fieldKey in fields) {
-                const field = fields[fieldKey];
+          if (this.options?.withApollo) {
+            for (const fieldKey in fields) {
+              const field = fields[fieldKey];
 
-                new DocumentObjectMap(field, typeName);
-                new OperationObjectMap(field, typeName);
-                new VariableObjectMap(field, typeName);
-                new HookFunctionMap(field, typeName, "", this.options);
+              const document = new DocumentObjectMap(field, operation);
+              this.add(document.toString());
 
-                if (isQuery) {
-                  new HookFunctionMap(field, typeName, "Lazy", this.options);
-                  new HookFunctionMap(field, typeName, "Suspense", this.options);
-                }
+              const hook = new HookFunctionMap(field, operation, "", this.options);
+              this.add(hook.toString());
+
+              if (operation === "Query") {
+                const lazy = new HookFunctionMap(field, operation, "Lazy", this.options);
+                this.add(lazy.toString());
+
+                const suspense = new HookFunctionMap(field, operation, "Suspense", this.options);
+                this.add(suspense.toString());
               }
             }
           }
-
-          new TypeScriptObjectMap(type);
-          break;
-
-        case TypeGuards.isInputObjectType(type):
-          new TypeScriptObjectMap(type);
-          break;
-
-        case TypeGuards.isUnion(type):
-          new UnionObjectMap(type);
-          break;
+        }
       }
     }
 
-    for (const type of BaseObjectMap._typeMap.values()) {
-      this._output.value += type.toString() + "\n\n";
-    }
+    this.add(ast.toString());
 
     return {
       index: this._output,
