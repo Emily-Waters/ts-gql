@@ -1,26 +1,12 @@
-import emdash from "@emilywaters/emdash";
-import {
-  GraphQLArgument,
-  GraphQLEnumType,
-  GraphQLField,
-  GraphQLInputObjectType,
-  GraphQLInterfaceType,
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLScalarType,
-  GraphQLType,
-  GraphQLUnionType,
-} from "graphql";
+import { GraphQLArgument, GraphQLField } from "graphql";
 import * as ts from "typescript";
 import { Config } from "../../..";
 import { TypeGuards } from "../../../guards/type-guards";
-import { GraphQLTypes } from "../../../types";
-import { getBaseType } from "../../find-base-type";
+import { GraphQLTypes, MetaType } from "../../../types";
+import { metaType } from "../../find-base-type";
+import { Format } from "../../format/variable-names";
 import { OperationKeywords } from "../constants";
 import { ASTHelpers } from "./helpers";
-
-export type DescriptionType = string | null | undefined;
 
 export class ASTBuilder {
   private ts = ASTHelpers;
@@ -32,30 +18,31 @@ export class ASTBuilder {
   }
 
   build(type: GraphQLTypes, exportable = false) {
-    if (TypeGuards.isScalar(type)) {
-      return;
-    }
-
     let name, alias;
-    const cached = this.getCachedValue(type);
+
+    const meta = metaType(type);
+    const cached = this.getCachedValue(meta);
 
     if (cached) {
       alias = cached;
-    } else if (TypeGuards.isEnum(type)) {
-      name = this.getName(type);
-      alias = this.enumToEnumDeclaration(type);
+      name = this.getName(meta);
+    } else if (TypeGuards.meta.isScalar(meta) && TypeGuards.scalars.isNative(meta.type)) {
+      return;
+    } else if (TypeGuards.meta.isEnum(meta)) {
+      name = this.getName(meta);
+      alias = this.enumToEnumDeclaration(meta);
     } else {
-      name = this.getName(type);
-      alias = this.toTypeDeclaration(type, exportable);
+      name = this.getName(meta);
+      alias = this.toTypeDeclaration(meta, exportable);
     }
 
     if (name && alias) this._cache.set(name, alias);
   }
 
-  private toTypeDeclaration(type: GraphQLTypes, exportable: boolean) {
-    const name = this.getName(type);
-    const node = this.buildType(type, false);
-    const description = this.getDescription(type);
+  private toTypeDeclaration(meta: MetaType, exportable: boolean) {
+    const name = this.getName(meta);
+    const node = this.buildType(meta, false);
+    const description = meta.type.description;
 
     return this.ts.typeAlias({
       name,
@@ -65,86 +52,58 @@ export class ASTBuilder {
     });
   }
 
-  private enumToEnumDeclaration(type: GraphQLEnumType) {
-    const name = this.getName(type);
-    const values = type.getValues().map((v) => v);
-    return this.ts.literal.enum(name, values);
+  private enumToEnumDeclaration(meta: MetaType<"enum">) {
+    const values = meta.type.getValues().map((v) => v);
+    return this.ts.literal.enum(this.getName(meta), values);
   }
 
-  private getName(type: GraphQLTypes): string {
-    return getBaseType(type).type.name;
+  private getCachedValue(meta: MetaType) {
+    return this._cache.get(this.getName(meta));
   }
 
-  private getDescription(type: GraphQLTypes): DescriptionType {
-    return getBaseType(type).type.description;
+  private getName(meta: MetaType) {
+    return meta.type.name;
   }
 
-  private getCachedValue(type: GraphQLTypes) {
-    return this._cache.get(this.getName(type));
-  }
-
-  private buildType(type: GraphQLTypes, reference: boolean): ts.TypeNode {
+  private buildType(meta: MetaType, reference: boolean): ts.TypeNode {
     switch (true) {
-      case TypeGuards.isEnum(type):
-        return this.enumToTypeNode(type);
-      case TypeGuards.isInputObject(type):
-        return this.inputObjectToTypeNode(type, reference);
-      case TypeGuards.isInterface(type):
-        return this.interfaceToTypeNode(type, reference);
-      case TypeGuards.isList(type):
-        return this.listToTypeNode(type, reference);
-      case TypeGuards.isNonNullable(type):
-        return this.nonNullableToTypeNode(type, reference);
-      case TypeGuards.isObject(type):
-        return this.objectToTypeNode(type, reference);
-      case TypeGuards.isScalar(type):
-        return this.scalarToTypeNode(type);
-      case TypeGuards.isUnion(type):
-        return this.unionToTypeNode(type, reference);
+      case TypeGuards.meta.isEnum(meta):
+        return this.enumToTypeNode(meta);
+      case TypeGuards.meta.isInputObject(meta):
+        return this.inputObjectToTypeNode(meta, reference);
+      case TypeGuards.meta.isInterface(meta):
+        return this.interfaceToTypeNode(meta, reference);
+      case TypeGuards.meta.isObject(meta):
+        return this.objectToTypeNode(meta, reference);
+      case TypeGuards.meta.isScalar(meta):
+        return this.scalarToTypeNode(meta);
+      case TypeGuards.meta.isUnion(meta):
+        return this.unionToTypeNode(meta, reference);
       default:
-        throw new Error(`Unsupported type: ${JSON.stringify(type, null, 2)}`);
+        throw new Error(`Unsupported type: ${JSON.stringify(meta, null, 2)}`);
     }
   }
 
-  private enumToTypeNode(type: GraphQLEnumType) {
-    return this.reference(type);
+  private enumToTypeNode(meta: MetaType<"enum">) {
+    return this.reference(meta);
   }
 
-  private inputObjectToTypeNode(type: GraphQLInputObjectType, reference: boolean) {
-    if (reference) return this.reference(type);
-    return this._object({ type });
+  private inputObjectToTypeNode(meta: MetaType<"input">, reference: boolean) {
+    if (reference) return this.reference(meta);
+    return this._object({ meta: meta });
   }
 
-  private interfaceToTypeNode(type: GraphQLInterfaceType, reference: boolean) {
-    return this.reference(type);
+  private interfaceToTypeNode(meta: MetaType<"interface">, reference: boolean) {
+    return this.reference(meta);
   }
 
-  private listToTypeNode(type: GraphQLList<GraphQLType>, reference: boolean) {
-    let node;
+  private objectToTypeNode(meta: MetaType<"object">, reference: boolean) {
+    if (reference) return this.reference(meta);
 
-    if (reference) {
-      node = this.reference(getBaseType(type).type);
-    } else {
-      node = this.buildType(getBaseType(type).type, reference);
-    }
+    const operation = OperationKeywords[this.getName(meta)];
+    if (operation) this.operationTypesToTypeNode(meta, operation);
 
-    return this.ts.literal.array(node);
-  }
-
-  private nonNullableToTypeNode(
-    type: GraphQLNonNull<GraphQLType>,
-    reference: boolean,
-  ): ts.TypeNode {
-    return this.buildType(getBaseType(type).type, reference);
-  }
-
-  private objectToTypeNode(type: GraphQLObjectType, reference: boolean) {
-    if (reference) return this.reference(type);
-
-    const operation = OperationKeywords[type.name];
-    if (operation) this.operationTypesToTypeNode(type, operation);
-
-    return this._object({ type, typeName: true });
+    return this._object({ meta, typeName: true });
   }
 
   private buildObjectProperties(
@@ -157,11 +116,11 @@ export class ASTBuilder {
 
     properties.push(
       ...fields.map((field) => {
-        const type = field.type;
+        const type = metaType(field.type);
 
         const key = field.name;
         const node = this.buildType(type, true);
-        const optional = this.isOptional(type);
+        const optional = !type.isNonNullable;
         const description = field.description;
 
         return this.ts.property({ key, node, optional, description });
@@ -171,23 +130,20 @@ export class ASTBuilder {
     return properties;
   }
 
-  private operationTypesToTypeNode(type: GraphQLObjectType, operation: string) {
-    const fields = type.getFields();
+  private operationTypesToTypeNode(meta: MetaType<"object">, operation: string) {
+    const fields = meta.type.getFields();
 
     for (const key in fields) {
       const field = fields[key];
 
-      const fieldName = emdash.string.capitalize(key);
-      const operationName = emdash.string.capitalize(operation);
-
-      const name = `${fieldName}${operationName}Result`;
-      const typename = this.ts.__typename(type.name);
-      this.buildOperationProperties(name, [field], typename);
+      const resultName = Format.result(key, operation);
+      const typename = this.ts.__typename(this.getName(meta));
+      this.buildOperationProperties(resultName, [field], typename);
 
       if (field.args) {
-        const name = `${fieldName}${operationName}Input`;
-        if (this._cache.has(name)) continue;
-        this.buildOperationProperties(name, field.args);
+        const inputName = Format.input(key, operation);
+        if (this._cache.has(inputName)) continue;
+        this.buildOperationProperties(inputName, field.args);
       }
     }
   }
@@ -203,26 +159,26 @@ export class ASTBuilder {
     this._cache.set(name, alias);
   }
 
-  private unionToTypeNode(type: GraphQLUnionType, reference: boolean) {
-    if (reference) return this.reference(type);
-    const values = type.getTypes().map((t) => this.buildType(t, reference));
+  private unionToTypeNode(meta: MetaType<"union">, reference: boolean) {
+    if (reference) return this.reference(meta);
+    const values = meta.type.getTypes().map((t) => this.buildType(metaType(t), reference));
     return this.ts.literal.union(values);
   }
 
-  private scalarToTypeNode(type: GraphQLScalarType) {
+  private scalarToTypeNode(meta: MetaType<"scalar">) {
     switch (true) {
-      case TypeGuards.scalars.String(type):
+      case TypeGuards.scalars.String(meta.type):
         return this.ts.keyword.string;
-      case TypeGuards.scalars.Int(type):
+      case TypeGuards.scalars.Int(meta.type):
         return this.ts.keyword.number;
-      case TypeGuards.scalars.Float(type):
+      case TypeGuards.scalars.Float(meta.type):
         return this.ts.keyword.number;
-      case TypeGuards.scalars.Boolean(type):
+      case TypeGuards.scalars.Boolean(meta.type):
         return this.ts.keyword.boolean;
       default:
-        if (this._scalars[type.name]) {
-          return this.ts.reference({ name: this._scalars[type.name] });
-        } else if (TypeGuards.scalars.ID(type)) {
+        if (this._scalars[this.getName(meta)]) {
+          return this.ts.reference({ name: this._scalars[this.getName(meta)] });
+        } else if (TypeGuards.scalars.ID(meta.type)) {
           return this.ts.keyword.string;
         }
 
@@ -230,27 +186,19 @@ export class ASTBuilder {
     }
   }
 
-  private reference(type: GraphQLTypes) {
-    return this.ts.reference({ name: this.getName(type) });
+  private reference(meta: MetaType) {
+    const ref = this.ts.reference({ name: this.getName(meta) });
+    if (meta.isList) return this.ts.literal.array(ref);
+    return ref;
   }
 
-  private _object({
-    type,
-    typeName,
-  }: {
-    type: GraphQLObjectType | GraphQLInputObjectType;
-    typeName?: boolean;
-  }) {
+  private _object({ meta, typeName }: { meta: MetaType<"object" | "input">; typeName?: boolean }) {
     let typename;
 
-    const fields = Object.values(type.getFields());
-    if (typeName) typename = this.ts.__typename(type.name);
+    const fields = Object.values(meta.type.getFields());
+    if (typeName) typename = this.ts.__typename(this.getName(meta));
     const properties = this.buildObjectProperties(fields, typename);
     return this.ts.literal.object(properties);
-  }
-
-  private isOptional(type: GraphQLTypes) {
-    return !TypeGuards.isNonNullable(type);
   }
 
   toString() {

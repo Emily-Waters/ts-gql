@@ -1,5 +1,5 @@
 import ts from "typescript";
-import { DescriptionType } from "./ast";
+import { DescriptionType } from "../../../types";
 
 export class ASTHelpers {
   private static ts = ts.factory;

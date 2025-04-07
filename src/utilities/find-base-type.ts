@@ -1,16 +1,16 @@
 import { TypeGuards } from "../guards/type-guards";
-import { GraphQLBaseType, GraphQLTypes } from "../types";
+import { GraphQLTypes, MetaType } from "../types";
 
-export function getBaseType(
+export function metaType(
   type: GraphQLTypes,
   meta = { isNonNullable: false, isList: false },
-): { type: GraphQLBaseType; isNonNullable: boolean; isList: boolean } {
+): MetaType {
   switch (true) {
     case TypeGuards.isNonNullable(type):
-      return getBaseType(type.ofType, { ...meta, isNonNullable: true });
+      return metaType(type.ofType, { ...meta, isNonNullable: true });
     case TypeGuards.isList(type):
-      return getBaseType(type.ofType, { ...meta, isList: true });
+      return metaType(type.ofType, { ...meta, isList: true });
     default:
-      return { type, ...meta };
+      return { type: type, ...meta };
   }
 }

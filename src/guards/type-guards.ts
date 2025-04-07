@@ -11,24 +11,7 @@ import {
   GraphQLType,
   GraphQLUnionType,
 } from "graphql";
-
-// export declare type GraphQLType =
-//   | GraphQLScalarType
-//   | GraphQLObjectType
-//   | GraphQLInterfaceType
-//   | GraphQLUnionType
-//   | GraphQLEnumType
-//   | GraphQLInputObjectType
-//   | GraphQLList<GraphQLType>
-//   | GraphQLNonNull<
-//       | GraphQLScalarType
-//       | GraphQLObjectType
-//       | GraphQLInterfaceType
-//       | GraphQLUnionType
-//       | GraphQLEnumType
-//       | GraphQLInputObjectType
-//       | GraphQLList<GraphQLType>
-//     >;
+import { MetaType } from "../types";
 
 class ScalarTypeGuards {
   static ID(type: GraphQLScalarType) {
@@ -49,6 +32,38 @@ class ScalarTypeGuards {
 
   static Boolean(type: GraphQLScalarType) {
     return type.name === "Boolean";
+  }
+
+  static isNative(type: GraphQLScalarType) {
+    return (
+      this.ID(type) || this.String(type) || this.Int(type) || this.Float(type) || this.Boolean(type)
+    );
+  }
+}
+
+class MetaTypeGuards {
+  static isEnum(meta: MetaType): meta is MetaType<"enum"> {
+    return TypeGuards.isEnum(meta.type);
+  }
+
+  static isInputObject(meta: MetaType): meta is MetaType<"input"> {
+    return TypeGuards.isInputObject(meta.type);
+  }
+
+  static isInterface(meta: MetaType): meta is MetaType<"interface"> {
+    return TypeGuards.isInterface(meta.type);
+  }
+
+  static isObject(meta: MetaType): meta is MetaType<"object"> {
+    return TypeGuards.isObject(meta.type);
+  }
+
+  static isScalar(meta: MetaType): meta is MetaType<"scalar"> {
+    return TypeGuards.isScalar(meta.type);
+  }
+
+  static isUnion(meta: MetaType): meta is MetaType<"union"> {
+    return TypeGuards.isUnion(meta.type);
   }
 }
 
@@ -98,4 +113,5 @@ export class TypeGuards {
   }
 
   static scalars = ScalarTypeGuards;
+  static meta = MetaTypeGuards;
 }

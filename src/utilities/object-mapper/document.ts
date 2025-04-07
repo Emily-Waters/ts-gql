@@ -1,7 +1,8 @@
 import emdash from "@emilywaters/emdash";
 import { GraphQLArgument, GraphQLField, GraphQLType, GraphQLUnionType } from "graphql";
 import { TypeGuards } from "../../guards/type-guards";
-import { getBaseType } from "../find-base-type";
+import { metaType } from "../find-base-type";
+import { Format } from "../format/variable-names";
 import { BaseObjectMap } from "./base";
 
 export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObjectMap<T> {
@@ -9,9 +10,7 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
     type: T,
     private operation: string,
   ) {
-    const fieldName = emdash.string.capitalize(type.name);
-    const operationName = emdash.string.capitalize(operation);
-    super(type, `${fieldName}${operationName}Document`);
+    super(type, Format.document(type.name, operation));
 
     this._type = "document";
     this.separator = "";
@@ -46,16 +45,19 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
   }
 
   private buildFields(type: GraphQLType, pair: (typeof this.pairs)[number]) {
-    const baseType = getBaseType(type);
+    const baseType = metaType(type);
 
-    if (TypeGuards.isObject(baseType)) {
+    console.log(this.type.name);
+
+    if (TypeGuards.meta.isObject(baseType)) {
       pair.value = [];
 
-      const fields = baseType.getFields();
+      const fields = baseType.type.getFields();
 
       for (const fieldKey in fields) {
         const field = fields[fieldKey];
-        const baseField = getBaseType(field);
+        const baseField = metaType(field);
+
         const nestedPair: (typeof this.pairs)[number] = {
           key: field.name,
           value: "",
@@ -63,10 +65,10 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
           description: field.description,
         };
 
-        if (TypeGuards.isObject(baseField)) {
-          this.buildFields(baseField, nestedPair);
-        } else if (TypeGuards.isUnion(baseField)) {
-          this.buildFragment(baseField, nestedPair);
+        if (TypeGuards.meta.isObject(baseField)) {
+          this.buildFields(baseField.type, nestedPair);
+        } else if (TypeGuards.meta.isUnion(baseField)) {
+          this.buildFragment(baseField.type, nestedPair);
         }
         pair.value.push(nestedPair);
       }
@@ -96,8 +98,8 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> extends BaseObj
 
   public toString() {
     return `${this.declaration}gql\`\n${
-      `${this.operation.toLowerCase()} ${emdash.string.capitalize(this.name)}` +
+      `  ${this.operation.toLowerCase()} ${emdash.string.capitalize(this.type.name)}` +
       `${this.buildArgs(this.type.args, (arg) => `$${arg.name}: ${arg.type}`)}`
-    }${this.buildPairs()}\`;`;
+    }${this.buildPairs(2)}\n\`;`;
   }
 }
