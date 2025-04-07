@@ -3,8 +3,8 @@ import * as ts from "typescript";
 import { Config } from "../../..";
 import { TypeGuards } from "../../../guards/type-guards";
 import { GraphQLTypes, MetaType } from "../../../types";
-import { metaType } from "../../find-base-type";
 import { Format } from "../../format/variable-names";
+import { metaType } from "../../meta-type";
 import { OperationKeywords } from "../constants";
 import { ASTHelpers } from "./helpers";
 

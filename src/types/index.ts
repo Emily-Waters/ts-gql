@@ -29,4 +29,6 @@ export type MetaType<T extends keyof GraphQLBaseTypeMap = keyof GraphQLBaseTypeM
   type: GraphQLBaseTypeMap[T];
   isList?: boolean;
   isNonNullable?: boolean;
+  isScalar?: boolean;
+  isUnion?: boolean;
 };

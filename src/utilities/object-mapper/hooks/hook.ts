@@ -1,6 +1,6 @@
 import { GraphQLField } from "graphql";
-import { Config } from "../..";
-import { Format } from "../format/variable-names";
+import { Config } from "../../..";
+import { Format } from "../../format/variable-names";
 
 export class HookFunctionMap<T extends GraphQLField<any, any>> {
   constructor(
@@ -40,7 +40,7 @@ export class HookFunctionMap<T extends GraphQLField<any, any>> {
     const refetchName = Format.refetch(this.type.name, this.operation);
 
     return [
-      `export function r${refetchName}(`,
+      `export function ${refetchName}(`,
       `  variables?: ${inputName},`,
       `) {`,
       `  return { query: ${documentName}, variables };`,

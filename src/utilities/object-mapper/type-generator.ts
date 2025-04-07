@@ -4,8 +4,8 @@ import { Config } from "../..";
 import { TypeGuards } from "../../guards/type-guards";
 import { ASTBuilder } from "./ast/ast";
 import { OperationKeywords } from "./constants";
-import { DocumentObjectMap } from "./document";
-import { HookFunctionMap } from "./hook";
+import { DocumentObjectMap } from "./documents/document";
+import { HookFunctionMap } from "./hooks/hook";
 
 export interface GraphQLTypeGeneratorOptions {}
 
