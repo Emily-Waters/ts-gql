@@ -11,65 +11,86 @@ import {
 
 export class OperationToSDLConverter {
   private argNameMapping: { [operationName: string]: { [originalName: string]: string } } = {};
-  private processedOperations: Set<string> = new Set();
+  private processed: Set<string> = new Set();
 
   constructor(private schema: GraphQLSchema) {}
 
-  convert(operationDoc: DocumentNode): string {
-    const operations = operationDoc.definitions.filter(
-      (def) => def.kind === Kind.OPERATION_DEFINITION,
-    ) as OperationDefinitionNode[];
+  convert(node: DocumentNode): string {
+    const operations = this.extractOperationDefinitions(node);
+    if (operations.length === 0) return "";
 
     const sdl: string[] = [];
+    sdl.push(...this.buildOperationsVariables(operations));
+    sdl.push(...this.buildOperationResultType(operations));
+    sdl.push(...this.buildOperationExtension(operations));
 
-    operations.forEach((operation) => {
-      if (operation.variableDefinitions && operation.variableDefinitions.length > 0) {
-        sdl.push(this.buildVariablesType(operation));
-      }
-    });
+    return sdl.join("\n\n");
+  }
 
-    // Second pass: Create result types for each operation
-    operations.forEach((operation) => {
-      const operationName =
-        operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
-      const returnType = `${emdash.string.capitalize(operationName)}`;
+  private extractOperationDefinitions(node: DocumentNode): OperationDefinitionNode[] {
+    return node.definitions.filter((def) => def.kind === Kind.OPERATION_DEFINITION);
+  }
 
-      // Build result type
-      sdl.push(`type ${returnType} {`);
+  private extractOperationName(operation: OperationDefinitionNode) {
+    return operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
+  }
 
-      // Add __typename field first
-      // sdl.push(`  __typename: "${emdash.string.capitalize(operation.operation)}"`);
+  private buildOperationsVariables(operations: OperationDefinitionNode[]): string[] {
+    return operations
+      .map((operation) => {
+        if (!operation.variableDefinitions || operation.variableDefinitions.length === 0) return;
 
-      // Process each top-level field in the operation for result type
-      for (const selection of operation.selectionSet.selections) {
-        if (selection.kind === Kind.FIELD) {
-          const field = selection as FieldNode;
-          const fieldName = field.name.value;
-          const rootType = this.getRootType(operation.operation);
-          if (!rootType) continue;
+        const operationName = this.extractOperationName(operation);
+        const inputName = `${operationName}Input`;
 
-          const schemaField = rootType.getFields()[fieldName];
-          if (!schemaField) continue;
+        const fields = [];
 
-          // Get the actual return type from the schema
-          const returnTypeName = schemaField.type.toString();
-
-          // Add the field with its return type
-          sdl.push(`  ${fieldName}: ${returnTypeName}`);
+        for (const field of operation.variableDefinitions) {
+          const key = field.variable.name.value;
+          const value = this.getTypeFromNode(field.type);
+          fields.push(emdash.string.indent(`${key}: ${value}`, 2));
         }
-      }
 
-      sdl.push("}");
+        return `type ${inputName} {\n${fields.join("\n")}\n}`;
+      })
+      .filter(Boolean) as string[];
+  }
 
-      // Mark this operation as processed
-      this.processedOperations.add(operationName);
-    });
+  private buildOperationResultType(operations: OperationDefinitionNode[]) {
+    return operations
+      .map((operation) => {
+        const operationName = this.extractOperationName(operation);
+        const returnType = `${emdash.string.capitalize(operationName)}`;
 
-    // Third pass: Extend Query/Mutation types to include operations
-    operations.forEach((operation) => {
-      const operationName =
-        operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
-      const returnType = `${emdash.string.capitalize(operationName)}`;
+        const fields = [];
+
+        for (const selection of operation.selectionSet.selections) {
+          if (selection.kind === Kind.FIELD) {
+            const field = selection as FieldNode;
+            const key = field.name.value;
+
+            const rootType = this.getRootType(operation.operation);
+            if (!rootType) return "";
+
+            const schemaField = rootType.getFields()[key];
+            // TODO: Throw an error here when the value of the field is not found in the schema
+            if (!schemaField) return "";
+
+            const value = schemaField.type.toString();
+            fields.push(emdash.string.indent(`${key}: ${value}`, 2));
+          }
+        }
+
+        this.processed.add(operationName);
+
+        return `type ${returnType} {${fields.join("\n")}\n}`;
+      })
+      .filter(Boolean) as string[];
+  }
+
+  private buildOperationExtension(operations: OperationDefinitionNode[]) {
+    return operations.map((operation) => {
+      const operationName = this.extractOperationName(operation);
       const rootTypeName = emdash.string.capitalize(operation.operation);
 
       const mappedArgs = operation.variableDefinitions?.length
@@ -79,24 +100,11 @@ export class OperationToSDLConverter {
             .join(", ")})`
         : "";
 
-      sdl.push(`extend type ${rootTypeName} {
-  ${operationName}${mappedArgs}: ${returnType}
-}`);
+      const returnValue = `${emdash.string.capitalize(operationName)}`;
+      const defs = emdash.string.indent(`${operationName}${mappedArgs}: ${returnValue}`, 2);
+
+      return `extend type ${rootTypeName} {\n${defs}\n}`;
     });
-
-    return sdl.join("\n\n");
-  }
-
-  private buildVariablesType(operation: OperationDefinitionNode): string {
-    const operationName =
-      operation.name?.value || `Unnamed${emdash.string.capitalize(operation.operation)}`;
-    const typeName = `${emdash.string.capitalize(operationName)}Input`;
-
-    const args = operation.variableDefinitions
-      ?.map((varDef) => `  ${varDef.variable.name.value}: ${this.getTypeFromNode(varDef.type)}`)
-      .join("\n");
-
-    return `type ${typeName} {\n${args}\n}`;
   }
 
   private mapArgument(
