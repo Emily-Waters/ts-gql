@@ -8,7 +8,8 @@ import { introspectionLoader } from "./loaders/introspection-loader";
 import { Logger } from "./logger/logger";
 import { GraphQLTypeGenerator } from "./object-mapper/type-generator";
 
-async function build({ gqlEndpoint, outDir, options = {}, documents, scalarMap }: Config) {
+async function build(config: Config) {
+  const { gqlEndpoint, outDir, options = {}, documents } = config;
   const outDirPath = join(cwd(), outDir);
   const outDirStat = await fs.stat(outDirPath).catch(() => null);
 
@@ -22,10 +23,14 @@ async function build({ gqlEndpoint, outDir, options = {}, documents, scalarMap }
     }
   }
 
-  const schema = await Logger.log("Fetching Schema", () => introspectionLoader(gqlEndpoint));
-  const documentLoader = new OperationDocumentLoader(schema, documents);
-  const combinedSchema = await Logger.log("Loading Documents", () => documentLoader.load());
-  const typeBuilder = new GraphQLTypeGenerator(combinedSchema, options, scalarMap);
+  let schema = await Logger.log("Fetching Schema", () => introspectionLoader(gqlEndpoint));
+
+  if (documents?.length) {
+    const documentLoader = new OperationDocumentLoader(schema, documents);
+    schema = await Logger.log("Loading Documents", () => documentLoader.load());
+  }
+
+  const typeBuilder = new GraphQLTypeGenerator(schema, config);
   const output = await Logger.log("Building Types", () => typeBuilder.generate());
 
   for (const [key, { ext, value }] of Object.entries(output)) {
