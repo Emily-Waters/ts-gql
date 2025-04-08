@@ -7,8 +7,7 @@ export class ASTHelpers {
   static typeAlias({
     name,
     node,
-    description,
-    deprecation,
+    comments,
     options = {
       exportable: false,
     },
@@ -18,8 +17,10 @@ export class ASTHelpers {
     options?: {
       exportable?: boolean;
     };
-    description?: DescriptionType;
-    deprecation?: DescriptionType;
+    comments?: {
+      description?: DescriptionType;
+      deprecation?: DescriptionType;
+    };
   }) {
     const modifiers = [];
 
@@ -34,7 +35,7 @@ export class ASTHelpers {
       node,
     );
 
-    this.comment(alias, description, deprecation);
+    this.comment(alias, comments);
 
     return alias;
   }
@@ -48,14 +49,15 @@ export class ASTHelpers {
   static property({
     key,
     node,
-    description,
-    deprecation,
+    comments,
     optional = false,
   }: {
     key: string;
     node: ts.TypeNode;
-    description?: DescriptionType;
-    deprecation?: DescriptionType;
+    comments?: {
+      description?: DescriptionType;
+      deprecation?: DescriptionType;
+    };
     optional?: boolean;
   }) {
     const property = this.ts.createPropertySignature(
@@ -65,13 +67,18 @@ export class ASTHelpers {
       node,
     );
 
-    this.comment(property, description, deprecation);
+    this.comment(property, comments);
 
     return property;
   }
 
-  static comment(node: ts.Node, description?: DescriptionType, deprecation?: DescriptionType) {
-    if (description || deprecation) {
+  static comment(
+    node: ts.Node,
+    comments?: { description?: DescriptionType; deprecation?: DescriptionType },
+  ) {
+    if (comments && (comments.deprecation || comments?.description)) {
+      const { deprecation, description } = comments;
+
       ts.setSyntheticLeadingComments(node, [
         {
           kind: ts.SyntaxKind.MultiLineCommentTrivia,

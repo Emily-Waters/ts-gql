@@ -48,7 +48,7 @@ export class ASTBuilder {
       name,
       node,
       options: { exportable },
-      description,
+      comments: { description },
     });
   }
 
@@ -124,7 +124,7 @@ export class ASTBuilder {
         const description = field.description;
         const deprecation = field.deprecationReason;
 
-        return this.ts.property({ key, node, optional, description, deprecation });
+        return this.ts.property({ key, node, optional, comments: { deprecation, description } });
       }),
     );
 
