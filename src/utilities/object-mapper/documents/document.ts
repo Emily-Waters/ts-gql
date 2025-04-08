@@ -7,12 +7,12 @@ import { metaType } from "../../meta-type";
 
 export type PairDataType = {
   key: string;
-  value: string | PairDataType[];
+  value: PairDataType[];
   description?: DescriptionType;
 };
 
 export class DocumentObjectMap<T extends GraphQLField<any, any>> {
-  private pairs: PairDataType[] = [];
+  private pairs: PairDataType = { key: "", value: [] };
   constructor(
     private type: T,
     private operation: string,
@@ -20,17 +20,14 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> {
     this.map();
   }
 
+  private createPair(key: string): PairDataType {
+    return { key, value: [] };
+  }
+
   private map() {
     const meta = metaType(this.type);
-
-    const pair: PairDataType = {
-      key: `${this.type.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`,
-      value: "",
-    };
-
-    this.buildFields(meta, pair);
-
-    this.pairs.push(pair);
+    const key = `${this.type.name}${this.buildArgs(this.type.args, (arg) => `${arg.name}: $${arg.name}`)}`;
+    this.mapPair(meta, key, this.pairs);
   }
 
   private buildArgs(
@@ -46,65 +43,35 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> {
 
   private buildFields(meta: MetaType, pair: PairDataType) {
     if (TypeGuards.meta.isObject(meta)) {
-      pair.value = [];
-
       const fields = meta.type.getFields();
 
       for (const fieldKey in fields) {
         const field = fields[fieldKey];
         const meta = metaType(field);
 
-        const nestedPair: PairDataType = {
-          key: field.name,
-          value: [],
-          description: field.description,
-        };
-
-        if (TypeGuards.meta.isObject(meta)) {
-          this.buildFields(meta, nestedPair);
-        } else if (TypeGuards.meta.isUnion(meta)) {
-          this.buildFragment(meta, nestedPair);
-        }
-
-        pair.value.push(nestedPair);
+        this.mapPair(meta, field.name, pair);
       }
-    } else {
-      pair.value = "";
+    } else if (TypeGuards.meta.isUnion(meta)) {
+      this.buildUnionFragments(meta, pair);
     }
   }
 
-  private buildFragment(meta: MetaType<"union">, pair: (typeof this.pairs)[number]) {
+  private buildUnionFragments(meta: MetaType<"union">, pair: PairDataType) {
     const types = meta.type.getTypes();
-
-    pair.value = [];
 
     for (const type of types) {
       const meta = metaType(type);
-      const nestedPair: (typeof this.pairs)[number] = {
-        key: `... on ${meta.type.name}`,
-        value: [],
-        description: meta.type.description,
-      };
-
-      this.buildFields(meta, nestedPair);
-
-      pair.value.push(nestedPair);
+      this.mapPair(meta, `... on ${meta.type.name}`, pair);
     }
   }
 
-  public buildPairs(depth: number) {
-    return this._buildPairs(depth, this.pairs);
+  private mapPair(meta: MetaType, key: string, parent: PairDataType) {
+    const pair = this.createPair(key);
+    this.buildFields(meta, pair);
+    parent.value.push(pair);
   }
 
-  protected keyValuePair({ key, value }: PairDataType, depth = 0) {
-    if (typeof value !== "string") {
-      value = this._buildPairs(depth, value);
-    }
-
-    return `${key}${value}\n`;
-  }
-
-  private _buildPairs(depth: number = 0, pairs: PairDataType[]): string {
+  private printPairs(pairs: PairDataType[], indent = 2): string {
     if (!pairs.length) {
       return "";
     }
@@ -112,12 +79,17 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> {
     return (
       ` {\n` +
       pairs.reduce((acc, pair) => {
-        let value = this.keyValuePair(pair, depth + 2);
-        value = emdash.string.indent(value, depth + 2);
+        let value = pair.key;
 
-        return `${acc}${value}`;
+        if (Array.isArray(pair.value)) {
+          value += this.printPairs(pair.value, indent + 2);
+        } else {
+          value += pair.value;
+        }
+
+        return `${acc}${emdash.string.indent(value, indent + 2)}\n`;
       }, "") +
-      emdash.string.indent("}", depth)
+      emdash.string.indent("}", indent)
     );
   }
 
@@ -127,6 +99,6 @@ export class DocumentObjectMap<T extends GraphQLField<any, any>> {
     return `export const ${documentName} = gql\`\n${
       `  ${this.operation.toLowerCase()} ${emdash.string.capitalize(this.type.name)}` +
       `${this.buildArgs(this.type.args, (arg) => `$${arg.name}: ${arg.type}`)}`
-    }${this.buildPairs(2)}\n\`;`;
+    }${this.printPairs(this.pairs.value)}\n\`;`;
   }
 }

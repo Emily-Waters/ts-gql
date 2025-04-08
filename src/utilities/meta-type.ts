@@ -12,12 +12,15 @@ export function metaType(
       return metaType(type.ofType, { ...meta, isList: true });
     case TypeGuards.isField(type):
       return metaType(type.type, { ...meta, isNonNullable: true });
-    default:
+    case TypeGuards.isGraphQL(type):
       return {
         type,
         ...meta,
         isScalar: TypeGuards.isScalar(type),
         isUnion: TypeGuards.isUnion(type),
       };
+
+    default:
+      return metaType((type as any).type, meta);
   }
 }

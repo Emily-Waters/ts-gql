@@ -100,6 +100,20 @@ export class TypeGuards {
     return type instanceof GraphQLNonNull;
   }
 
+  static isGraphQL(type: unknown): type is GraphQLType {
+    return (
+      this.isEnum(type) ||
+      this.isField(type) ||
+      this.isInputObject(type) ||
+      this.isInterface(type) ||
+      this.isList(type) ||
+      this.isNonNullable(type) ||
+      this.isObject(type) ||
+      this.isScalar(type) ||
+      this.isUnion(type)
+    );
+  }
+
   static isField(type: unknown): type is GraphQLField<any, any> {
     return !!(
       typeof type === "object" &&
