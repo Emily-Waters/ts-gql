@@ -30,15 +30,14 @@
     "express": "^5.1.0",
     "prettier": "^3.3.3",
     "tsup": "^8.3.0",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.3"
+    "tsx": "^4.19.1"
   },
   "dependencies": {
+    "typescript": "^5.6.3",
     "@apollo/client": "^3.11.8",
     "@emilywaters/emdash": "^1.0.9",
     "bundle-require": "^5.0.0",
     "chalk": "^4.1.2",
-    "emdash": "^0.0.0-b",
     "glob": "^11.0.1",
     "graphql": "^16.9.0",
     "yargs": "^17.7.2"
