@@ -8,6 +8,7 @@ export class ASTHelpers {
     name,
     node,
     description,
+    deprecation,
     options = {
       exportable: false,
     },
@@ -18,6 +19,7 @@ export class ASTHelpers {
       exportable?: boolean;
     };
     description?: DescriptionType;
+    deprecation?: DescriptionType;
   }) {
     const modifiers = [];
 
@@ -32,7 +34,7 @@ export class ASTHelpers {
       node,
     );
 
-    this.comment(alias, description);
+    this.comment(alias, description, deprecation);
 
     return alias;
   }
@@ -47,11 +49,13 @@ export class ASTHelpers {
     key,
     node,
     description,
+    deprecation,
     optional = false,
   }: {
     key: string;
     node: ts.TypeNode;
-    description?: string | null;
+    description?: DescriptionType;
+    deprecation?: DescriptionType;
     optional?: boolean;
   }) {
     const property = this.ts.createPropertySignature(
@@ -61,22 +65,34 @@ export class ASTHelpers {
       node,
     );
 
-    this.comment(property, description);
+    this.comment(property, description, deprecation);
 
     return property;
   }
 
-  static comment(node: ts.Node, description?: string | null) {
-    if (description) {
+  static comment(node: ts.Node, description?: DescriptionType, deprecation?: DescriptionType) {
+    if (description || deprecation) {
       ts.setSyntheticLeadingComments(node, [
         {
           kind: ts.SyntaxKind.MultiLineCommentTrivia,
-          text: `* ${description} `,
+          text: `* ${this.formatMultilineComment([description, `${deprecation ? `@deprecated ${deprecation}` : ""}`])} `,
           pos: -1,
           end: -1,
           hasTrailingNewLine: true,
         },
       ]);
+    }
+  }
+
+  private static formatMultilineComment(values: DescriptionType[]) {
+    const filtered = values.filter(Boolean);
+
+    if (!filtered.length) {
+      return;
+    } else if (filtered.length === 1) {
+      return filtered[0];
+    } else {
+      return filtered.map((str) => `* ${str}`).join("\n");
     }
   }
 

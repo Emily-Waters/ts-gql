@@ -122,8 +122,9 @@ export class ASTBuilder {
         const node = this.buildType(type, true);
         const optional = !type.isNonNullable;
         const description = field.description;
+        const deprecation = field.deprecationReason;
 
-        return this.ts.property({ key, node, optional, description });
+        return this.ts.property({ key, node, optional, description, deprecation });
       }),
     );
 
