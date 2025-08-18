@@ -32,7 +32,7 @@ export class ASTBuilder {
       return;
     } else if (TypeGuards.meta.isEnum(meta)) {
       name = this.getName(meta);
-      alias = this.enumToEnumDeclaration(meta);
+      alias = this.enumToEnumDeclaration(meta, exportable);
     } else {
       name = this.getName(meta);
       alias = this.toTypeDeclaration(meta, exportable);
@@ -54,7 +54,7 @@ export class ASTBuilder {
     });
   }
 
-  private enumToEnumDeclaration(meta: MetaType<"enum">) {
+  private enumToEnumDeclaration(meta: MetaType<"enum">, exportable: boolean) {
     const values = meta.type.getValues().map((v) => v);
     return this.ts.literal.enum(this.getName(meta), values);
   }

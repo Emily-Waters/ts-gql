@@ -120,9 +120,13 @@ export class ASTHelpers {
     number: (value: number) => this.ts.createNumericLiteral(value.toString()),
     object: (properties?: ts.TypeElement[]) => this.ts.createTypeLiteralNode(properties),
     union: (nodes: ts.TypeNode[]) => this.ts.createUnionTypeNode(nodes),
-    enum: (name: string, nodes: { name: string; value: string }[]) =>
+    enum: (
+      name: string,
+      nodes: { name: string; value: string }[],
+      { exportable }: { exportable?: boolean } = { exportable: true },
+    ) =>
       this.ts.createEnumDeclaration(
-        undefined,
+        exportable ? [this.ts.createModifier(ts.SyntaxKind.ExportKeyword)] : undefined,
         name,
         nodes.map((node) => this.ts.createEnumMember(node.name, this.stringLiteral(node.value))),
       ),
