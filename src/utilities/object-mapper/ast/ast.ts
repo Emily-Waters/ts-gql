@@ -8,6 +8,8 @@ import { metaType } from "../../meta-type";
 import { OperationKeywords } from "../constants";
 import { ASTHelpers } from "./helpers";
 
+export type Maybe<T> = T | null;
+
 export class ASTBuilder {
   private ts = ASTHelpers;
   private _scalars: NonNullable<Config["scalarMap"]> = {};
@@ -17,7 +19,7 @@ export class ASTBuilder {
     this._scalars = scalars;
   }
 
-  build(type: GraphQLTypes, exportable = false) {
+  build(type: GraphQLTypes, exportable = true) {
     let name, alias;
 
     const meta = metaType(type);
@@ -119,12 +121,22 @@ export class ASTBuilder {
         const type = metaType(field.type);
 
         const key = field.name;
-        const node = this.buildType(type, true);
+        let node = this.buildType(type, true);
         const optional = !type.isNonNullable;
         const description = field.description;
         const deprecation = field.deprecationReason;
 
-        return this.ts.property({ key, node, optional, comments: { deprecation, description } });
+        // Wrap optional properties with Maybe<T>
+        if (optional) {
+          node = this.ts.reference({ name: "Maybe", args: [node] });
+        }
+
+        return this.ts.property({
+          key,
+          node,
+          optional: false,
+          comments: { deprecation, description },
+        });
       }),
     );
 
@@ -166,25 +178,38 @@ export class ASTBuilder {
     return this.ts.literal.union(values);
   }
 
-  private scalarToTypeNode(meta: MetaType<"scalar">) {
+  private scalarToTypeNode(meta: MetaType<"scalar">): any {
+    let keyword: any;
+
     switch (true) {
       case TypeGuards.scalars.String(meta.type):
-        return this.ts.keyword.string;
+        keyword = this.ts.keyword.string;
+        break;
       case TypeGuards.scalars.Int(meta.type):
-        return this.ts.keyword.number;
+        keyword = this.ts.keyword.number;
+        break;
       case TypeGuards.scalars.Float(meta.type):
-        return this.ts.keyword.number;
+        keyword = this.ts.keyword.number;
+        break;
       case TypeGuards.scalars.Boolean(meta.type):
-        return this.ts.keyword.boolean;
+        keyword = this.ts.keyword.boolean;
+        break;
       default:
         if (this._scalars[this.getName(meta)]) {
           return this.ts.reference({ name: this._scalars[this.getName(meta)] });
         } else if (TypeGuards.scalars.ID(meta.type)) {
-          return this.ts.keyword.string;
+          keyword = this.ts.keyword.string;
+          break;
         }
 
-        return this.ts.keyword.any;
+        keyword = this.ts.keyword.any;
     }
+
+    if (meta.isList) {
+      keyword = this.ts.literal.array(keyword);
+    }
+
+    return keyword;
   }
 
   private reference(meta: MetaType) {
